@@ -406,16 +406,26 @@ const Minigame = {
         Game.minigame.requiredScore = Game.minigame.collectibles.length;
     },
 
-    startMaze: () => {
+startMaze: () => {
         Game.state = "GAME";
         AudioSys.playMusic('bgm-maze');
         document.getElementById("novel-layer").style.display = "none";
         document.getElementById("game-canvas").style.display = "block";
 
         Game.minigame.mode = "QUIZ";
-        Game.minigame.player = { x: 415, y: 480, w: 40, h: 40, color: '#880afe', type: 'player' };
-        Game.minigame.quizLevel = 0;
+        
+        // CORREÇÃO: RESET TOTAL DE VARIÁVEIS
+        Game.minigame.quizLevel = 0; // Garante que comece na pergunta 1
         Game.minigame.collectibles = [];
+        
+        // Reseta Posição do Jogador
+        Game.minigame.player = { x: 415, y: 480, w: 40, h: 40, color: '#880afe', type: 'player' };
+
+        // Reseta Inputs (Isso impede que ele saia andando sozinho)
+        Input.keys = {}; 
+        Input.touch.active = false;
+        Input.touch.velocityX = 0;
+        Input.touch.velocityY = 0;
 
         // Portas do Quiz
         const doorY = 100;
@@ -426,7 +436,6 @@ const Minigame = {
             { x: 650, y: doorY, w: doorSize, h: doorSize, type: 'door', answerIndex: 2, color: '#8B4513' }
         ];
     }
-};
 
 
 
@@ -939,7 +948,7 @@ const Renderer = {
         // 2. TEXTO DA PERGUNTA (Apenas Modo Quiz)
         if (Game.minigame.mode === 'QUIZ') {
             const q = QuizData[Game.minigame.quizLevel];
-            
+             if (!q) return;
             // Pergunta no topo
             ctx.fillStyle = "#fff";
             ctx.font = "bold 24px Arvo";
