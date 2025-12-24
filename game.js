@@ -343,7 +343,7 @@ const Engine = {
         requestAnimationFrame(Engine.gameLoop);
     }
 };
-
+const Minigame = {
 startArena: () => {
         Game.state = "GAME";
         AudioSys.playMusic('bgm-minigame');
