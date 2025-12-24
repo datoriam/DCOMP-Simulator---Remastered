@@ -1,6 +1,74 @@
-/* * DCOMP SIMULATOR ENGINE (REMASTERED)
- * Baseado no index2.html, mas estruturado e limpo.
- */
+// Adicione após o objeto AudioSys no game.js:
+
+const Transition = {
+    active: false,
+    type: null,
+    duration: 1000,
+    startTime: null,
+    
+    fadeOut: (callback) => {
+        Transition.active = true;
+        Transition.type = 'fadeOut';
+        Transition.startTime = Date.now();
+        Transition.callback = callback;
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'transition-overlay';
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        `;
+        document.getElementById('game-container').appendChild(overlay);
+        
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            setTimeout(() => {
+                if (callback) callback();
+                Transition.fadeIn();
+            }, 500);
+        }, 10);
+    },
+    
+    fadeIn: () => {
+        const overlay = document.getElementById('transition-overlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+                Transition.active = false;
+            }, 500);
+        }
+    },
+    
+    screenShake: (intensity = 10, duration = 200) => {
+        const container = document.getElementById('game-container');
+        const originalPosition = container.style.transform;
+        
+        let startTime = Date.now();
+        const shake = () => {
+            const elapsed = Date.now() - startTime;
+            if (elapsed < duration) {
+                const x = (Math.random() - 0.5) * 2 * intensity * (1 - elapsed/duration);
+                const y = (Math.random() - 0.5) * 2 * intensity * (1 - elapsed/duration);
+                container.style.transform = `translate(${x}px, ${y}px)`;
+                requestAnimationFrame(shake);
+            } else {
+                container.style.transform = originalPosition;
+            }
+        };
+        shake();
+    }
+};
 
 // --- 1. CONFIGURAÇÃO E DADOS ---
 
