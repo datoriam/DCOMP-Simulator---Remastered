@@ -1,4 +1,3 @@
-
 const Transition = {
     active: false,
     type: null,
@@ -105,9 +104,8 @@ const Game = {
     canvas: null,
     ctx: null,
     
-    // Estado do Minigame
     minigame: {
-        mode: null, // 'ARENA' ou 'QUIZ'
+        mode: null, 
         player: { x: 0, y: 0, w: 50, h: 50, speed: 5, color: 'blue' },
         entities: [],
         collectibles: [],
@@ -136,32 +134,31 @@ const Scripts = {
     "gw_win": { bg: Assets.bg.resun, char: "goodways", text: "Viva! Você concluiu a missão! Pegue sua recompensa.", choices: [{ text: "Pegar Pergaminho", next: "end_pergaminho" }] },
     "gw_lose": { bg: Assets.bg.gameover, char: "nobody", text: "VOCÊ ERROU A PORTA! Tentar de novo?", choices: [{ text: "Tentar Novamente", action: "START_MAZE" }, { text: "Voltar ao Início", next: "inicio" }] },
 
-    // ROTA KAL-EL (Visual Novel Pura)
+    // ROTA KAL-EL
     "kal_ola": { bg: Assets.bg.reitoria, char: "kalelfreira", text: "Olá! Sou Kal-El Freira. Vou lhe ensinar as normas!", choices: [{ text: "Normas?", next: "kal_selva" }] },
     "kal_selva": { bg: Assets.bg.reitoria, char: "kalelfreira", text: "A UFS é uma selva. As normas te protegem!", choices: [{ text: "Entendi", next: "kal_missao" }] },
     "kal_missao": { 
         bg: Assets.bg.reitoria, 
         char: "kalelfreira", 
         text: "Vou testar seu conhecimento. O Jubilômetro não pode chegar a 100%!", 
-        choices: [{ text: "Começar Teste", action: "START_KAL_QUIZ" }] // Ação especial
+        choices: [{ text: "Começar Teste", action: "START_KAL_QUIZ" }] 
     },
     "kal_jubilado": {
-    bg: Assets.bg.gameover,
-    char: "nobody",
-    text: "JUBILADO! Você atingiu 100% no Jubilômetro. Tente novamente!",
-    choices: [{ text: "Tentar Novamente", action: "START_KAL_QUIZ" }, 
-              { text: "Voltar ao Início", next: "inicio" }]
-},
-
+        bg: Assets.bg.gameover,
+        char: "nobody",
+        text: "JUBILADO! Você atingiu 100% no Jubilômetro. Tente novamente!",
+        choices: [{ text: "Tentar Novamente", action: "START_KAL_QUIZ" }, 
+                  { text: "Voltar ao Início", next: "inicio" }]
+    },
     "kal_win": {
-    bg: Assets.bg.resun,
-    char: "kalelfreira",
-    text: "Parabéns! Você dominou as normas sem ser jubilado! Isso merece um café especial.",
-    choices: [{ text: "Pegar Café Especial", next: "end_cafe" },
-              { text: "Voltar ao Início", next: "inicio" }]
-},
+        bg: Assets.bg.resun,
+        char: "kalelfreira",
+        text: "Parabéns! Você dominou as normas sem ser jubilado! Isso merece um café especial.",
+        choices: [{ text: "Pegar Café Especial", next: "end_cafe" },
+                  { text: "Voltar ao Início", next: "inicio" }]
+    },
 
-    // ROTA ADCOFFEE (ARENA)
+    // ROTA ADCOFFEE
     "ad_intro": { bg: Assets.bg.adufs, char: "pinguitor", text: "Colete 10 broches e fuja do Big C!", choices: [{ text: "Vamos nessa!", action: "START_ARENA" }] },
     "ad_win": { bg: Assets.bg.adufs, char: "pinguitor", text: "Você venceu! O Café Lendário é seu.", choices: [{ text: "Pegar Café", next: "end_cafe" }] },
     "ad_lose": { bg: Assets.bg.adufs, char: "bigc", text: "O Big C te pegou! Mais sorte na próxima.", choices: [{ text: "Revanche", action: "START_ARENA" }, { text: "Desistir", next: "inicio" }] },
@@ -170,8 +167,8 @@ const Scripts = {
     "end_pergaminho": { bg: Assets.bg.pergaminho, char: "nobody", text: "Você obteve o PERGAMINHO DO PODEROSO DEV!", choices: [{ text: "Reiniciar", next: "inicio" }] },
     "end_cafe": { bg: Assets.bg.cafe, char: "nobody", text: "Você obteve o CAFÉ LENDÁRIO!", choices: [{ text: "Reiniciar", next: "inicio" }] }
 };
-// --- LÓGICA DO JUBILÔMETRO (Rota Kal-El) ---
 
+// --- LÓGICA DO JUBILÔMETRO ---
 const NormasData = [
     { p: "Qual o mínimo de frequência para passar?", r: ["75%", "50%", "100%"], c: 0 },
     { p: "Quantas reprovações jubilam por insuficiência?", r: ["3 reprovações", "4 reprovações", "2 reprovações"], c: 1 },
@@ -185,49 +182,36 @@ const NormasData = [
 
 const KalElSystem = {
     meter: 0,
-    questionsQueue: [], // Fila de perguntas para não repetir
+    questionsQueue: [],
     
     start: () => {
         KalElSystem.meter = 0;
-        
-        // 1. SOLUÇÃO DA REPETIÇÃO E QUANTIDADE:
-        // Cria uma cópia da lista NormasData e embaralha ela agora.
         KalElSystem.questionsQueue = [...NormasData].sort(() => Math.random() - 0.5);
-        
-        // OBS: Se quiser usar SÓ 5 perguntas aleatórias das 8, descomente a linha abaixo:
-        // KalElSystem.questionsQueue = KalElSystem.questionsQueue.slice(0, 5);
-
         UI.showJubilometro(true);
         KalElSystem.updateDisplay();
         KalElSystem.showNextQuestion();
     },
 
     showNextQuestion: () => {
-        // Verifica Derrota (Jubilado)
         if (KalElSystem.meter >= 100) {
             UI.showJubilometro(false);
             Engine.loadScene("kal_jubilado");
             return;
         }
 
-        // 2. SOLUÇÃO DO FIM DE JOGO:
-        // Verifica se a fila de perguntas acabou. Se sim, Vitória!
         if (KalElSystem.questionsQueue.length === 0) {
             UI.showJubilometro(false);
             Engine.loadScene("kal_win");
             return;
         }
 
-        // 3. Tira a próxima pergunta da fila (o .pop() remove ela, então nunca repete)
         const q = KalElSystem.questionsQueue.pop();
         
-        // Define o humor do avatar
         let avatar = "kalelfreira";
         if (KalElSystem.meter >= 30) avatar = "kalelfreiratriste";
         if (KalElSystem.meter >= 70) avatar = "kalelfreirabravo";
 
-        // Mostra quantas faltam para acabar
-        const total = NormasData.length; // Ou 5, se você usou o slice
+        const total = NormasData.length;
         const atual = total - KalElSystem.questionsQueue.length;
 
         const sceneData = {
@@ -236,7 +220,6 @@ const KalElSystem = {
             text: `(Pergunta ${atual}/${total}) - Risco: ${KalElSystem.meter}%\n\n${q.p}`,
             choices: q.r.map((resp, index) => ({
                 text: resp,
-                // Aqui garantimos que a ação processe a resposta dessa pergunta específica
                 action: index === q.c ? "KAL_CORRECT" : "KAL_WRONG" 
             }))
         };
@@ -246,13 +229,11 @@ const KalElSystem = {
 
     processAnswer: (isCorrect) => {
         if (isCorrect) {
-            // Acertou: diminui o risco
             if (KalElSystem.meter > 0) {
                 KalElSystem.meter = Math.max(0, KalElSystem.meter - 10);
             }
             AudioSys.playSFX('sfx-collect');
         } else {
-            // Errou: aumenta o risco
             KalElSystem.meter += 25;
             AudioSys.playSFX('sfx-lose');
             Transition.screenShake(10, 300);
@@ -260,8 +241,6 @@ const KalElSystem = {
 
         KalElSystem.updateDisplay();
         
-        // 4. SOLUÇÃO DO LOOP:
-        // Independente se acertou ou errou, chama a próxima pergunta da fila
         setTimeout(() => {
             KalElSystem.showNextQuestion();
         }, 800);
@@ -293,11 +272,9 @@ const Engine = {
         const scene = Scripts[sceneId];
         Game.currentScene = scene;
 
-        // UI Switch
         document.getElementById("novel-layer").style.display = "block";
         document.getElementById("game-canvas").style.display = "none";
         
-        // Render Novel Elements
         document.getElementById("background-layer").style.backgroundImage = `url('${scene.bg}')`;
         const charImg = document.getElementById("char-sprite");
         if (Assets.chars[scene.char] && scene.char !== 'nobody') {
@@ -309,7 +286,6 @@ const Engine = {
         document.getElementById("speaker-name").innerText = scene.char === 'nobody' ? '' : scene.char.toUpperCase();
         document.getElementById("dialogue-text").innerText = scene.text;
 
-        // Buttons
         const choicesDiv = document.getElementById("choices-container");
         choicesDiv.innerHTML = "";
         scene.choices.forEach(c => {
@@ -317,7 +293,6 @@ const Engine = {
             btn.className = "choice-btn";
             btn.innerText = c.text;
             btn.onclick = () => {
-                // CORREÇÃO AQUI: Usar 'else if' para encadear tudo
                 if (c.action === "START_ARENA") Minigame.startArena();
                 else if (c.action === "START_KAL_QUIZ") KalElSystem.start();
                 else if (c.action === "START_MAZE") Minigame.startMaze();
@@ -377,12 +352,9 @@ const Minigame = {
         document.getElementById("game-canvas").style.display = "block";
 
         Game.minigame.mode = "ARENA";
-        // Jogador Cyan para contraste
         Game.minigame.player = { x: 650, y: 300, w: 40, h: 40, color: 'cyan', type: 'player' };
         
-        // Limpa lista de portas do outro jogo
         Game.minigame.entities = [
-            // Paredes (Agora Pratas para ver melhor)
             { x: 100, y: 300, w: 50, h: 50, type: 'wall' },
             { x: 300, y: 100, w: 50, h: 50, type: 'wall' },
             { x: 500, y: 400, w: 50, h: 50, type: 'wall' },
@@ -391,7 +363,6 @@ const Minigame = {
             { x: 1100, y: 150, w: 50, h: 50, type: 'wall' },
             { x: 600, y: 550, w: 50, h: 50, type: 'wall' },
             { x: 1200, y: 500, w: 50, h: 50, type: 'wall' },
-            // Inimigos (Vermelhos)
             { x: 100, y: 20, w: 60, h: 60, type: 'enemy', speed: 2.5 },
             { x: 750, y: 500, w: 60, h: 60, type: 'enemy', speed: 3.5 }
         ];
@@ -406,7 +377,7 @@ const Minigame = {
         Game.minigame.requiredScore = Game.minigame.collectibles.length;
     },
 
-startMaze: () => {
+    startMaze: () => {
         Game.state = "GAME";
         AudioSys.playMusic('bgm-maze');
         document.getElementById("novel-layer").style.display = "none";
@@ -414,20 +385,17 @@ startMaze: () => {
 
         Game.minigame.mode = "QUIZ";
         
-        // CORREÇÃO: RESET TOTAL DE VARIÁVEIS
-        Game.minigame.quizLevel = 0; // Garante que comece na pergunta 1
+        // --- CORREÇÃO IMPORTANTE: Zera o nível e o estado ---
+        Game.minigame.quizLevel = 0; 
         Game.minigame.collectibles = [];
         
-        // Reseta Posição do Jogador
+        // Reseta Posição e Inputs
         Game.minigame.player = { x: 415, y: 480, w: 40, h: 40, color: '#880afe', type: 'player' };
-
-        // Reseta Inputs (Isso impede que ele saia andando sozinho)
         Input.keys = {}; 
         Input.touch.active = false;
         Input.touch.velocityX = 0;
         Input.touch.velocityY = 0;
 
-        // Portas do Quiz
         const doorY = 100;
         const doorSize = 80;
         Game.minigame.entities = [
@@ -436,8 +404,7 @@ startMaze: () => {
             { x: 650, y: doorY, w: doorSize, h: doorSize, type: 'door', answerIndex: 2, color: '#8B4513' }
         ];
     }
-
-
+};
 
 // --- 4. UTILITÁRIOS E INIT ---
 
@@ -445,19 +412,14 @@ const Input = {
     keys: {},
     touch: {
         active: false,
-        startX: 0,
-        startY: 0,
-        currentX: 0,
-        currentY: 0,
-        velocityX: 0,
-        velocityY: 0
+        startX: 0, startY: 0,
+        currentX: 0, currentY: 0,
+        velocityX: 0, velocityY: 0
     },
     init: () => {
-        // Controles de teclado
+        // Teclado
         window.addEventListener("keydown", e => {
-            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d","W","A","S","D"].indexOf(e.key) > -1) {
-                e.preventDefault();
-            }
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d"].indexOf(e.key.toLowerCase()) > -1) e.preventDefault();
             Input.keys[e.key] = true;
             Input.keys[e.key.toLowerCase()] = true;
         });
@@ -466,46 +428,33 @@ const Input = {
             Input.keys[e.key.toLowerCase()] = false;
         });
 
-        // Controles de toque
+        // Touch e Mouse
         const canvas = document.getElementById("game-canvas");
         
-        canvas.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            
+        const handleStart = (x, y) => {
             Input.touch.active = true;
-            Input.touch.startX = touch.clientX - rect.left;
-            Input.touch.startY = touch.clientY - rect.top;
+            const rect = canvas.getBoundingClientRect();
+            Input.touch.startX = x - rect.left;
+            Input.touch.startY = y - rect.top;
             Input.touch.currentX = Input.touch.startX;
             Input.touch.currentY = Input.touch.startY;
             Input.touch.velocityX = 0;
             Input.touch.velocityY = 0;
-            
-            // Se estiver no modo Quiz, verifica se tocou diretamente em uma porta
+
+            // Lógica de clique nas portas (Quiz)
             if (Game.minigame.mode === "QUIZ") {
                 const touchX = Input.touch.startX;
                 const touchY = Input.touch.startY;
-                
                 Game.minigame.entities.forEach(ent => {
                     if (ent.type === 'door') {
-                        if (touchX >= ent.x && touchX <= ent.x + ent.w &&
-                            touchY >= ent.y && touchY <= ent.y + ent.h) {
-                            // Tocado diretamente na porta - processa imediatamente
+                        if (touchX >= ent.x && touchX <= ent.x + ent.w && touchY >= ent.y && touchY <= ent.y + ent.h) {
                             const currentQ = QuizData[Game.minigame.quizLevel];
                             if (ent.answerIndex === currentQ.correta) {
-                                // ACERTOU
                                 AudioSys.playSFX('sfx-collect');
                                 Game.minigame.quizLevel++;
-                                
-                                if (Game.minigame.quizLevel >= QuizData.length) {
-                                    Engine.loadScene('gw_win');
-                                } else {
-                                    Game.minigame.player.x = 415;
-                                    Game.minigame.player.y = 480;
-                                }
+                                if (Game.minigame.quizLevel >= QuizData.length) Engine.loadScene('gw_win');
+                                else { Game.minigame.player.x = 415; Game.minigame.player.y = 480; }
                             } else {
-                                // ERROU
                                 AudioSys.playSFX('sfx-lose');
                                 Engine.loadScene('gw_lose');
                             }
@@ -513,106 +462,36 @@ const Input = {
                     }
                 });
             }
-        }, { passive: false });
+        };
 
-        canvas.addEventListener("touchmove", (e) => {
-            e.preventDefault();
+        canvas.addEventListener("touchstart", (e) => { e.preventDefault(); handleStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+        canvas.addEventListener("mousedown", (e) => { handleStart(e.clientX, e.clientY); });
+
+        const handleMove = (x, y) => {
             if (!Input.touch.active) return;
-            
-            const touch = e.touches[0];
             const rect = canvas.getBoundingClientRect();
+            Input.touch.currentX = x - rect.left;
+            Input.touch.currentY = y - rect.top;
             
-            Input.touch.currentX = touch.clientX - rect.left;
-            Input.touch.currentY = touch.clientY - rect.top;
-            
-            // Calcula a velocidade para movimento suave
             Input.touch.velocityX = (Input.touch.currentX - Input.touch.startX) * 0.2;
             Input.touch.velocityY = (Input.touch.currentY - Input.touch.startY) * 0.2;
             
-            // Move o jogador diretamente no toque (se não for modo Quiz com toque direto)
             if (Game.minigame.mode === "ARENA" || Game.minigame.mode === "QUIZ") {
                 const player = Game.minigame.player;
                 const newX = Input.touch.currentX - player.w/2;
                 const newY = Input.touch.currentY - player.h/2;
-                
-                // Limita aos limites da tela
                 player.x = Math.max(0, Math.min(Game.canvas.width - player.w, newX));
                 player.y = Math.max(0, Math.min(Game.canvas.height - player.h, newY));
             }
-        }, { passive: false });
+        };
 
-        canvas.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            Input.touch.active = false;
-            Input.touch.velocityX = 0;
-            Input.touch.velocityY = 0;
-        }, { passive: false });
+        canvas.addEventListener("touchmove", (e) => { e.preventDefault(); handleMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+        canvas.addEventListener("mousemove", (e) => { handleMove(e.clientX, e.clientY); });
 
-        // Também suporte a mouse para desktop (arrastar com mouse)
-        canvas.addEventListener("mousedown", (e) => {
-            const rect = canvas.getBoundingClientRect();
-            
-            Input.touch.active = true;
-            Input.touch.startX = e.clientX - rect.left;
-            Input.touch.startY = e.clientY - rect.top;
-            Input.touch.currentX = Input.touch.startX;
-            Input.touch.currentY = Input.touch.startY;
-            
-            // Verifica clique direto nas portas (modo Quiz)
-            if (Game.minigame.mode === "QUIZ") {
-                const clickX = Input.touch.startX;
-                const clickY = Input.touch.startY;
-                
-                Game.minigame.entities.forEach(ent => {
-                    if (ent.type === 'door') {
-                        if (clickX >= ent.x && clickX <= ent.x + ent.w &&
-                            clickY >= ent.y && clickY <= ent.y + ent.h) {
-                            const currentQ = QuizData[Game.minigame.quizLevel];
-                            if (ent.answerIndex === currentQ.correta) {
-                                AudioSys.playSFX('sfx-collect');
-                                Game.minigame.quizLevel++;
-                                
-                                if (Game.minigame.quizLevel >= QuizData.length) {
-                                    Engine.loadScene('gw_win');
-                                } else {
-                                    Game.minigame.player.x = 415;
-                                    Game.minigame.player.y = 480;
-                                }
-                            } else {
-                                AudioSys.playSFX('sfx-lose');
-                                Engine.loadScene('gw_lose');
-                            }
-                        }
-                    }
-                });
-            }
-        });
-
-        canvas.addEventListener("mousemove", (e) => {
-            if (!Input.touch.active) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            Input.touch.currentX = e.clientX - rect.left;
-            Input.touch.currentY = e.clientY - rect.top;
-            
-            // Move o jogador com o mouse
-            if (Game.minigame.mode === "ARENA" || Game.minigame.mode === "QUIZ") {
-                const player = Game.minigame.player;
-                const newX = Input.touch.currentX - player.w/2;
-                const newY = Input.touch.currentY - player.h/2;
-                
-                player.x = Math.max(0, Math.min(Game.canvas.width - player.w, newX));
-                player.y = Math.max(0, Math.min(Game.canvas.height - player.h, newY));
-            }
-        });
-
-        canvas.addEventListener("mouseup", () => {
-            Input.touch.active = false;
-        });
-
-        canvas.addEventListener("mouseleave", () => {
-            Input.touch.active = false;
-        });
+        const handleEnd = () => { Input.touch.active = false; };
+        canvas.addEventListener("touchend", (e) => { e.preventDefault(); handleEnd(); }, { passive: false });
+        canvas.addEventListener("mouseup", handleEnd);
+        canvas.addEventListener("mouseleave", handleEnd);
     }
 };
 
@@ -636,22 +515,16 @@ const AudioSys = {
         if(el) { el.currentTime = 0; el.play().catch(e => {}); }
     }
 };
-// --- CONTROLE DE VISIBILIDADE DA PÁGINA ---
 
 document.addEventListener("visibilitychange", () => {
-    // Verifica se existe uma música tocando atualmente
     if (AudioSys.currentTrackId) {
         const audioEl = document.getElementById(AudioSys.currentTrackId);
-        
         if (audioEl) {
             if (document.hidden) {
-                // Usuário saiu da aba -> PAUSA
                 audioEl.pause();
                 console.log("Aba oculta: Música pausada.");
             } else {
-                // Usuário voltou -> TOCA
-                // O .catch evita erros se o navegador bloquear o autoplay
-                audioEl.play().catch(e => console.log("Retomada de áudio bloqueada: clique na tela"));
+                audioEl.play().catch(e => {});
                 console.log("Aba visível: Música retomada.");
             }
         }
@@ -659,89 +532,54 @@ document.addEventListener("visibilitychange", () => {
 });
 
 const AssetLoader = {
-    total: 0, 
-    loaded: 0,
-    
+    total: 0, loaded: 0,
     start: () => {
-        // 1. Lista de Imagens (Caminhos)
         const imgSources = [...Object.values(Assets.chars), ...Object.values(Assets.bg)];
-        
-        // 2. Lista de Áudios (Elementos HTML reais)
         const audioElements = Array.from(document.querySelectorAll('audio'));
-        
-        // Total de coisas para carregar
         AssetLoader.total = imgSources.length + audioElements.length;
         AssetLoader.loaded = 0;
-
-        // Atualiza texto inicial
         AssetLoader.updateText();
 
-        // Caso não tenha assets (prevenção de travamento)
-        if (AssetLoader.total === 0) { 
-            AssetLoader.finish(); 
-            return; 
-        }
+        if (AssetLoader.total === 0) { AssetLoader.finish(); return; }
 
-        // --- A. CARREGAMENTO DE IMAGENS ---
         imgSources.forEach(src => {
             const img = new Image();
-            // Importante: Definir os eventos ANTES do src
             img.onload = AssetLoader.progress;
-            img.onerror = () => {
-                console.warn(`Erro ao carregar imagem: ${src}`);
-                AssetLoader.progress(); // Conta mesmo com erro pra não travar o jogo
-            };
+            img.onerror = () => { console.warn(`Erro img: ${src}`); AssetLoader.progress(); };
             img.src = src;
         });
 
-        // --- B. CARREGAMENTO DE ÁUDIO (Onde geralmente demora) ---
         audioElements.forEach(audio => {
-            // Verifica se o navegador já carregou o áudio (cache)
-            if (audio.readyState >= 3) { // 3 = HAVE_FUTURE_DATA (suficiente para tocar)
-                AssetLoader.progress();
-            } else {
-                // Se não carregou, adiciona ouvintes
+            if (audio.readyState >= 3) AssetLoader.progress();
+            else {
                 const onLoaded = () => {
                     audio.removeEventListener('canplaythrough', onLoaded);
                     audio.removeEventListener('error', onError);
                     AssetLoader.progress();
                 };
-                
                 const onError = () => {
-                    console.warn(`Erro ao carregar áudio: ${audio.src}`);
+                    console.warn(`Erro audio: ${audio.src}`);
                     audio.removeEventListener('canplaythrough', onLoaded);
                     audio.removeEventListener('error', onError);
                     AssetLoader.progress();
                 };
-
                 audio.addEventListener('canplaythrough', onLoaded);
                 audio.addEventListener('error', onError);
-                
-                // Força o navegador a buscar o áudio agora
                 audio.load();
             }
         });
     },
-
     progress: () => {
         AssetLoader.loaded++;
         AssetLoader.updateText();
-        
-        if (AssetLoader.loaded >= AssetLoader.total) {
-            AssetLoader.finish();
-        }
+        if (AssetLoader.loaded >= AssetLoader.total) AssetLoader.finish();
     },
-    
     updateText: () => {
         const pct = Math.floor((AssetLoader.loaded / AssetLoader.total) * 100);
         const txt = document.getElementById('loading-text');
-        const bar = document.querySelector('.spinner'); // Opcional: se quiser animar algo
-        
         if(txt) txt.innerText = `Carregando Assets... ${pct}%`;
     },
-
     finish: () => {
-        // Pequeno delay proposital para o usuário ver o 100% (UX)
         setTimeout(() => {
             document.getElementById('loading-state').style.display = 'none';
             document.getElementById('start-state').style.display = 'block';
@@ -756,7 +594,7 @@ window.onload = () => {
     };
     Game.canvas = document.getElementById("game-canvas");
     Game.ctx = Game.canvas.getContext("2d");
-    Input.init(); // Agora inicializa controles touch também
+    Input.init();
     AssetLoader.start();
 
     document.getElementById('btn-start').onclick = () => {
@@ -776,289 +614,163 @@ window.onload = () => {
 const Physics = {
     update: () => {
         const player = Game.minigame.player;
-        let dx = 0; 
-        let dy = 0;
+        let dx = 0, dy = 0;
         const speed = 5;
 
-        // Controles de teclado (WASD e setas)
-        if (Input.keys.ArrowUp || Input.keys.w || Input.keys.W) dy = -speed;
-        if (Input.keys.ArrowDown || Input.keys.s || Input.keys.S) dy = speed;
-        if (Input.keys.ArrowLeft || Input.keys.a || Input.keys.A) dx = -speed;
-        if (Input.keys.ArrowRight || Input.keys.d || Input.keys.D) dx = speed;
+        if (Input.keys.ArrowUp || Input.keys.w) dy = -speed;
+        if (Input.keys.ArrowDown || Input.keys.s) dy = speed;
+        if (Input.keys.ArrowLeft || Input.keys.a) dx = -speed;
+        if (Input.keys.ArrowRight || Input.keys.d) dx = speed;
 
-        // Se estiver usando toque/mouse arrastando, usa o controle por toque
-        // (O movimento por arrasto já é aplicado diretamente nos event listeners)
-        // Para movimento por inércia após soltar o toque:
         if (!Input.touch.active && (Input.touch.velocityX !== 0 || Input.touch.velocityY !== 0)) {
             dx += Input.touch.velocityX;
             dy += Input.touch.velocityY;
-            // Reduz a velocidade gradualmente
             Input.touch.velocityX *= 0.9;
             Input.touch.velocityY *= 0.9;
             if (Math.abs(Input.touch.velocityX) < 0.1) Input.touch.velocityX = 0;
             if (Math.abs(Input.touch.velocityY) < 0.1) Input.touch.velocityY = 0;
         }
 
-        // Movimento Proposto (apenas para controles de teclado/inércia)
         const nextX = player.x + dx;
         const nextY = player.y + dy;
         const width = Game.canvas.width;
         const height = Game.canvas.height;
 
-        // Aplica movimento dos controles de teclado/inércia
         if (dx !== 0 || dy !== 0) {
             if (nextX >= 0 && nextX + player.w <= width) player.x = nextX;
             if (nextY >= 0 && nextY + player.h <= height) player.y = nextY;
         }
 
-        // Resto da função de colisão permanece igual...
-        // 2. Colisão com ENTIDADES
         Game.minigame.entities.forEach(ent => {
             if (CheckCollision(player, ent)) {
-                
-                // --- REGRA UNIVERSAL DE PAREDE ---
                 if (ent.type === 'wall') {
-                    // Reverte o movimento (colisão sólida)
                     player.x -= dx;
                     player.y -= dy;
-                    // Também para movimento por toque
                     if (Input.touch.active) {
-                        // Empurra o jogador para fora da parede
-                        const playerCenterX = player.x + player.w/2;
-                        const playerCenterY = player.y + player.h/2;
-                        const entCenterX = ent.x + ent.w/2;
-                        const entCenterY = ent.y + ent.h/2;
-                        
-                        const diffX = playerCenterX - entCenterX;
-                        const diffY = playerCenterY - entCenterY;
-                        
-                        if (Math.abs(diffX) > Math.abs(diffY)) {
-                            // Colisão horizontal
-                            if (diffX > 0) player.x = ent.x + ent.w;
-                            else player.x = ent.x - player.w;
+                        const pcX = player.x + player.w/2, pcY = player.y + player.h/2;
+                        const ecX = ent.x + ent.w/2, ecY = ent.y + ent.h/2;
+                        if (Math.abs(pcX - ecX) > Math.abs(pcY - ecY)) {
+                            if (pcX - ecX > 0) player.x = ent.x + ent.w; else player.x = ent.x - player.w;
                         } else {
-                            // Colisão vertical
-                            if (diffY > 0) player.y = ent.y + ent.h;
-                            else player.y = ent.y - player.h;
+                            if (pcY - ecY > 0) player.y = ent.y + ent.h; else player.y = ent.y - player.h;
                         }
                     }
-                }
-
-                // --- REGRAS DA ARENA (AdCoffee) ---
-                else if (Game.minigame.mode === 'ARENA') {
+                } else if (Game.minigame.mode === 'ARENA') {
                     if (ent.type === 'enemy') {
                         AudioSys.playSFX('sfx-lose');
                         Engine.loadScene('ad_lose');
                     }
-                }
-                
-                // --- REGRAS DO QUIZ (Portas) ---
-                else if (Game.minigame.mode === 'QUIZ') {
+                } else if (Game.minigame.mode === 'QUIZ') {
                     if (ent.type === 'door') {
                         const currentQ = QuizData[Game.minigame.quizLevel];
-                        
-                        // Verifica resposta
                         if (ent.answerIndex === currentQ.correta) {
-                            // ACERTOU
                             AudioSys.playSFX('sfx-collect');
                             Game.minigame.quizLevel++;
-
-                            // Checa vitória
-                            if (Game.minigame.quizLevel >= QuizData.length) {
-                                Engine.loadScene('gw_win');
-                            } else {
-                                // Reseta a posição do jogador para o início IMEDIATAMENTE
-                                Game.minigame.player.x = 415; // Posição X inicial (centro)
-                                Game.minigame.player.y = 480; // Posição Y inicial (embaixo)
-                                
-                                // Zera qualquer movimento residual (importante para touch/inércia)
-                                Input.touch.velocityX = 0;
-                                Input.touch.velocityY = 0;
-                                Input.touch.active = false; // Para de arrastar
+                            if (Game.minigame.quizLevel >= QuizData.length) Engine.loadScene('gw_win');
+                            else {
+                                Game.minigame.player.x = 415;
+                                Game.minigame.player.y = 480;
+                                Input.touch.velocityX = 0; Input.touch.velocityY = 0; Input.touch.active = false;
                             }
                         } else {
-                            // ERROU
                             AudioSys.playSFX('sfx-lose');
-                            
-                            // Opcional: Se errar, também reseta posição antes de mostrar a tela de erro
-                            // Isso evita bugs visuais se ele clicar em "Tentar Novamente"
                             Game.minigame.player.x = 415;
                             Game.minigame.player.y = 480;
-                            
                             Engine.loadScene('gw_lose');
                         }
-                    }
-                    else if (ent.type === 'spike') {
+                    } else if (ent.type === 'spike') {
                         Engine.loadScene('gw_lose');
                     }
                 }
             }
-            // 3. MOVIMENTO DO INIMIGO (SÓ NA ARENA)
             if (ent.type === 'enemy' && Game.minigame.mode === 'ARENA') {
-                const diffX = player.x - ent.x;
-                const diffY = player.y - ent.y;
-                const dist = Math.sqrt(diffX*diffX + diffY*diffY);
-                
-                // Persegue se estiver a uma certa distância
-                if (dist > 10) { 
-                    ent.x += (diffX / dist) * ent.speed;
-                    ent.y += (diffY / dist) * ent.speed;
-                }
+                const dx = player.x - ent.x, dy = player.y - ent.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist > 10) { ent.x += (dx/dist)*ent.speed; ent.y += (dy/dist)*ent.speed; }
             }
         });
 
-        // 4. COLETÁVEIS (SÓ NA ARENA)
         let collectedCount = 0;
         if (Game.minigame.mode === 'ARENA') {
             Game.minigame.collectibles.forEach(c => {
                 if (c.active) {
-                    if (CheckCollision(player, c)) {
-                        c.active = false;
-                        AudioSys.playSFX('sfx-collect');
-                    }
-                } else {
-                    collectedCount++;
-                }
+                    if (CheckCollision(player, c)) { c.active = false; AudioSys.playSFX('sfx-collect'); }
+                } else collectedCount++;
             });
-            // Vitória na Arena
-            if (collectedCount >= Game.minigame.requiredScore) {
-                Engine.loadScene('ad_win');
-            }
+            if (collectedCount >= Game.minigame.requiredScore) Engine.loadScene('ad_win');
         }
     }
 };
 
-const CheckCollision = (rect1, rect2) => {
-    return (rect1.x < rect2.x + rect2.w &&
-            rect1.x + rect1.w > rect2.x &&
-            rect1.y < rect2.y + rect2.h &&
-            rect1.y + rect1.h > rect2.y);
-};
+const CheckCollision = (r1, r2) => (r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y);
 
 // --- 6. RENDERIZAÇÃO ---
 
 const Renderer = {
     draw: () => {
         const ctx = Game.ctx;
-        
-        // 1. FUNDO
         ctx.fillStyle = Game.minigame.mode === 'ARENA' ? "#333" : "#222";
         ctx.fillRect(0, 0, Game.canvas.width, Game.canvas.height);
 
-        // 2. TEXTO DA PERGUNTA (Apenas Modo Quiz)
         if (Game.minigame.mode === 'QUIZ') {
             const q = QuizData[Game.minigame.quizLevel];
-             if (!q) return;
-            // Pergunta no topo
-            ctx.fillStyle = "#fff";
-            ctx.font = "bold 24px Arvo";
-            ctx.textAlign = "center";
-            ctx.fillText(q.pergunta, Game.canvas.width / 2, 60);
+            // PROTEÇÃO CONTRA CRASH: Se não houver pergunta (erro de indice), para de desenhar
+            if (!q) return; 
 
-            // Instrução menor
-            ctx.font = "16px Arvo";
-            ctx.fillStyle = "#aaa";
+            ctx.fillStyle = "#fff"; ctx.font = "bold 24px Arvo"; ctx.textAlign = "center";
+            ctx.fillText(q.pergunta, Game.canvas.width / 2, 60);
+            ctx.font = "16px Arvo"; ctx.fillStyle = "#aaa";
             ctx.fillText("Escolha a porta correta:", Game.canvas.width / 2, 90);
             
-            // Instrução para mobile (apenas se for tela pequena ou touch)
             if (window.innerWidth <= 768 || Input.touch.active) {
-                ctx.font = "14px Arvo";
-                ctx.fillStyle = "#4CAF50";
+                ctx.font = "14px Arvo"; ctx.fillStyle = "#4CAF50";
                 ctx.fillText("Toque/Arraste o boneco ou clique nas portas", Game.canvas.width / 2, Game.canvas.height - 20);
             }
         }
         
-        // 3. Instruções para Arena (mobile)
         if (Game.minigame.mode === 'ARENA' && (window.innerWidth <= 768 || Input.touch.active)) {
-            ctx.font = "14px Arvo";
-            ctx.fillStyle = "#4CAF50";
-            ctx.textAlign = "center";
+            ctx.font = "14px Arvo"; ctx.fillStyle = "#4CAF50"; ctx.textAlign = "center";
             ctx.fillText("Arraste o boneco para coletar os broches", Game.canvas.width / 2, Game.canvas.height - 20);
             ctx.fillText("Fuja dos inimigos vermelhos!", Game.canvas.width / 2, Game.canvas.height - 40);
         }
 
-        // 4. ENTIDADES (Paredes, Portas, Inimigos) - Código existente...
         Game.minigame.entities.forEach(e => {
-            
             if (e.type === 'door') {
-                ctx.fillStyle = e.color || '#8B4513';
-                ctx.fillRect(e.x, e.y, e.w, e.h);
-
-                ctx.strokeStyle = "#DAA520"; 
-                ctx.lineWidth = 4;
-                ctx.strokeRect(e.x, e.y, e.w, e.h);
-
+                ctx.fillStyle = e.color || '#8B4513'; ctx.fillRect(e.x, e.y, e.w, e.h);
+                ctx.strokeStyle = "#DAA520"; ctx.lineWidth = 4; ctx.strokeRect(e.x, e.y, e.w, e.h);
                 if (Game.minigame.mode === 'QUIZ') {
                     const q = QuizData[Game.minigame.quizLevel];
-                    ctx.fillStyle = "#fff";
-                    ctx.font = "bold 18px Arvo";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    
+                    ctx.fillStyle = "#fff"; ctx.font = "bold 18px Arvo"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
                     ctx.fillText(q.opcoes[e.answerIndex], e.x + e.w/2, e.y + e.h/2);
-                    
                     ctx.textBaseline = "alphabetic"; 
                 }
-            }
-            
-            else if (e.type === 'wall') {
-                ctx.fillStyle = "#555";
-                ctx.fillRect(e.x, e.y, e.w, e.h);
-            }
-
-            else if (e.type === 'enemy') {
-                ctx.fillStyle = "red";
-                ctx.fillRect(e.x, e.y, e.w, e.h);
-            }
-            
-            else if (e.type === 'spike') {
-                ctx.fillStyle = "#f00";
-                ctx.fillRect(e.x, e.y, e.w, e.h);
+            } else if (e.type === 'wall') {
+                ctx.fillStyle = "#555"; ctx.fillRect(e.x, e.y, e.w, e.h);
+            } else if (e.type === 'enemy') {
+                ctx.fillStyle = "red"; ctx.fillRect(e.x, e.y, e.w, e.h);
+            } else if (e.type === 'spike') {
+                ctx.fillStyle = "#f00"; ctx.fillRect(e.x, e.y, e.w, e.h);
             }
         });
 
-        // 5. COLETÁVEIS (Apenas Modo Arena)
         if (Game.minigame.mode === 'ARENA') {
             ctx.fillStyle = "gold";
             Game.minigame.collectibles.forEach(c => {
                 if (c.active) {
-                    ctx.beginPath();
-                    ctx.arc(c.x + c.w/2, c.y + c.h/2, c.w/2, 0, Math.PI*2);
-                    ctx.fill();
-                    ctx.strokeStyle = "white";
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.arc(c.x + c.w/2, c.y + c.h/2, c.w/2, 0, Math.PI*2);
+                    ctx.fill(); ctx.strokeStyle = "white"; ctx.lineWidth = 1; ctx.stroke();
                 }
             });
         }
 
-        // 6. JOGADOR
         const p = Game.minigame.player;
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.w, p.h);
         
-        // 7. Mostrar ponto de toque (apenas para debug, opcional)
         if (Input.touch.active) {
             ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
-            ctx.beginPath();
-            ctx.arc(Input.touch.currentX, Input.touch.currentY, 20, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(Input.touch.currentX, Input.touch.currentY, 20, 0, Math.PI * 2); ctx.fill();
         }
-        
         ctx.textAlign = "start"; 
     }
 };
-
-
-// --- 7. UTILITÁRIOS ---
-
-const UI = {
-    hideNovel: () => {
-        document.getElementById("novel-layer").style.display = "none";
-        document.getElementById("game-canvas").style.display = "block";
-    },
-    showJubilometro: (show) => {
-        document.getElementById('jubilometro-container').style.display = show ? 'flex' : 'none';
-    }
-};
-
