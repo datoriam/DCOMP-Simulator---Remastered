@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DCOMP Simulator - Remastered</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="audio-assets" style="display:none;">
+    <audio id="bgm-main" src="assets/musicadefundodojogo.mp3" loop></audio>
+    <audio id="bgm-minigame" src="assets/musicadominigame.mp3" loop></audio>
+    <audio id="bgm-maze" src="assets/musicadolabirinto.mp3" loop></audio>
+    <audio id="sfx-collect" src="assets/musicadeganharitens.mp3"></audio>
+    <audio id="sfx-lose" src="assets/mauscaminhossound.mp3"></audio>
+</div>
+
+<div id="game-container">
+    <canvas id="game-canvas" width="878" height="560"></canvas>
+    
+    <div id="novel-layer">
+        <div id="background-layer"></div>
+        <div id="character-layer">
+            <img id="char-sprite" src="" alt="Personagem">
+        </div>
+        
+        <div id="hud-layer">
+            <div id="inventory-box"></div>
+        </div>
+        
+        <div id="dialogue-box">
+            <h3 id="speaker-name"></h3>
+            <p id="dialogue-text"></p>
+            <div id="choices-container"></div>
+        </div>
+    </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
