@@ -16,11 +16,28 @@
     <audio id="sfx-lose" src="assets/mauscaminhossound.mp3"></audio>
 </div>
 
+<div id="loading-screen">
+    <div class="loader-content">
+        <h1 class="game-title">DCOMP SIMULATOR</h1>
+        
+        <div id="loading-state">
+            <div class="spinner"></div>
+            <p id="loading-text">Carregando Assets... 0%</p>
+        </div>
+
+        <div id="start-state" style="display: none;">
+            <p class="ready-text">Sistema Pronto</p>
+            <button id="btn-start">INICIAR JOGO</button>
+        </div>
+    </div>
+</div>
+
 <div id="game-container">
     <canvas id="game-canvas" width="878" height="560"></canvas>
     
     <div id="novel-layer">
         <div id="background-layer"></div>
+        
         <div id="character-layer">
             <img id="char-sprite" src="" alt="Personagem">
         </div>

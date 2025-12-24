@@ -102,7 +102,8 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
+    pointer-events: none; /* Isso bloqueia tudo */
+    z-index: 10;
 }
 
 #background-layer {
@@ -120,13 +121,19 @@ canvas {
 #character-layer {
     position: absolute;
     bottom: 0;
-    right: 5%;
-    height: 85%;
-    z-index: 2;
+    right: 0; /* Cola na direita da tela */
+    left: auto; /* Garante que não use o left */
+    width: 50%; /* Ocupa a metade direita da tela */
+    height: 100%;
+    z-index: 2; /* Fica acima do fundo (0), mas abaixo do diálogo (5) */
+
+    /* Flexbox para alinhar a imagem no canto inferior direito */
     display: flex;
-    align-items: flex-end;
+    align-items: flex-end; 
     justify-content: flex-end;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+
+    padding-right: 20px; /* Um pequeno espaçamento da borda */
+    pointer-events: none; /* Importante: deixa clicar no que estiver atrás/frente se precisar */
 }
 
 #character-layer::after {
@@ -142,10 +149,13 @@ canvas {
 }
 
 #character-layer img {
-    max-height: 100%;
-    max-width: 400px;
+    max-height: 85%; /* Altura máxima para não cortar a cabeça */
+    max-width: 100%; /* Não deixa estourar a largura */
+    object-fit: contain; /* Garante a proporção da imagem */
+    
+    /* Seus efeitos de animação mantidos: */
     animation: float 3s ease-in-out infinite;
-    filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.3));
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
 }
 
 @keyframes float {
@@ -157,17 +167,20 @@ canvas {
 #dialogue-box {
     position: absolute;
     bottom: 30px;
-    left: 50%;
+    left: 35%;
     transform: translateX(-50%);
-    width: 85%;
+    width: 60%;
+    /* ADICIONE ESTA LINHA AQUI EMBAIXO: */
+    pointer-events: auto; /* Isso reativa o clique na caixa de texto */
+    background: linear-gradient(to bottom, var(--light-bg) 0%, rgba(255, 255, 255, 0.98) 100%);
     background: linear-gradient(to bottom, var(--light-bg) 0%, rgba(255, 255, 255, 0.98) 100%);
     border: none;
     border-radius: 20px;
     padding: 25px;
     color: var(--text-dark);
     box-sizing: border-box;
-    z-index: 10;
-    min-height: 160px;
+    z-index: 05;
+    min-height: 140px;
     backdrop-filter: blur(10px);
     box-shadow: 
         0 10px 30px rgba(0, 0, 0, 0.2),
@@ -294,6 +307,7 @@ canvas {
     display: flex;
     gap: 15px;
     align-items: center;
+    pointer-events: auto;
 }
 
 #inventory-box {
@@ -435,4 +449,84 @@ canvas {
         width: 90%;
         padding: 20px;
     }
+}
+/* TELA DE LOADING / START */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a15; /* Fundo escuro */
+    z-index: 9999; /* Garante que fique acima de tudo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    flex-direction: column;
+}
+
+.loader-content {
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+.game-title {
+    font-size: 3.5em;
+    color: var(--primary-color);
+    text-shadow: 0 0 20px rgba(91, 20, 222, 0.6);
+    margin-bottom: 50px;
+    letter-spacing: 4px;
+    font-family: 'Arvo', serif;
+}
+
+/* Animação de Carregamento (Círculo girando) */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255,255,255,0.1);
+    border-top: 5px solid var(--secondary-color); /* Laranja */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loading-text, .ready-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    color: #aaa;
+}
+
+/* Botão de Iniciar */
+#btn-start {
+    background: transparent;
+    border: 2px solid var(--accent-color); /* Verde */
+    color: var(--accent-color);
+    padding: 15px 50px;
+    font-size: 1.5em;
+    font-family: 'Arvo', serif;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    animation: pulse 2s infinite;
+}
+
+#btn-start:hover {
+    background: var(--accent-color);
+    color: #000;
+    box-shadow: 0 0 40px var(--accent-color);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
