@@ -627,6 +627,27 @@ const AudioSys = {
         if(el) { el.currentTime = 0; el.play().catch(e => {}); }
     }
 };
+// --- CONTROLE DE VISIBILIDADE DA PÁGINA ---
+
+document.addEventListener("visibilitychange", () => {
+    // Verifica se existe uma música tocando atualmente
+    if (AudioSys.currentTrackId) {
+        const audioEl = document.getElementById(AudioSys.currentTrackId);
+        
+        if (audioEl) {
+            if (document.hidden) {
+                // Usuário saiu da aba -> PAUSA
+                audioEl.pause();
+                console.log("Aba oculta: Música pausada.");
+            } else {
+                // Usuário voltou -> TOCA
+                // O .catch evita erros se o navegador bloquear o autoplay
+                audioEl.play().catch(e => console.log("Retomada de áudio bloqueada: clique na tela"));
+                console.log("Aba visível: Música retomada.");
+            }
+        }
+    }
+});
 
 const AssetLoader = {
     total: 0, 
@@ -721,7 +742,9 @@ const AssetLoader = {
 };
 
 window.onload = () => {
-    
+    document.getElementById('btn-force-mobile').onclick = () => {
+        document.getElementById('mobile-warning').style.display = 'none';
+    };
     Game.canvas = document.getElementById("game-canvas");
     Game.ctx = Game.canvas.getContext("2d");
     Input.init(); // Agora inicializa controles touch também
