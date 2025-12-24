@@ -1,3 +1,5 @@
+
+
 const Transition = {
     active: false,
     type: null,
@@ -343,8 +345,9 @@ const Engine = {
         requestAnimationFrame(Engine.gameLoop);
     }
 };
+
 const Minigame = {
-startArena: () => {
+    startArena: () => {
         Game.state = "GAME";
         AudioSys.playMusic('bgm-minigame');
         document.getElementById("novel-layer").style.display = "none";
@@ -352,21 +355,17 @@ startArena: () => {
 
         Game.minigame.mode = "ARENA";
         
-        // --- CORREÇÃO: RESET DOS CONTROLES (Adicione isso) ---
+        // RESET COMPLETO PARA EVITAR BUGS DE MOVIMENTO
         Input.keys = {}; 
         Input.touch.active = false;
         Input.touch.velocityX = 0;
         Input.touch.velocityY = 0;
         Input.touch.currentX = 0;
         Input.touch.currentY = 0;
-        // ----------------------------------------------------
 
-        // Jogador Cyan para contraste
         Game.minigame.player = { x: 650, y: 300, w: 40, h: 40, color: 'cyan', type: 'player' };
         
-        // Limpa lista de portas do outro jogo
         Game.minigame.entities = [
-            // Paredes (Agora Pratas para ver melhor)
             { x: 100, y: 300, w: 50, h: 50, type: 'wall' },
             { x: 300, y: 100, w: 50, h: 50, type: 'wall' },
             { x: 500, y: 400, w: 50, h: 50, type: 'wall' },
@@ -375,7 +374,6 @@ startArena: () => {
             { x: 1100, y: 150, w: 50, h: 50, type: 'wall' },
             { x: 600, y: 550, w: 50, h: 50, type: 'wall' },
             { x: 1200, y: 500, w: 50, h: 50, type: 'wall' },
-            // Inimigos (Vermelhos)
             { x: 100, y: 20, w: 60, h: 60, type: 'enemy', speed: 2.5 },
             { x: 750, y: 500, w: 60, h: 60, type: 'enemy', speed: 3.5 }
         ];
@@ -398,11 +396,10 @@ startArena: () => {
 
         Game.minigame.mode = "QUIZ";
         
-        // --- CORREÇÃO IMPORTANTE: Zera o nível e o estado ---
+        // RESET COMPLETO PARA EVITAR TELA PRETA NO RESTART
         Game.minigame.quizLevel = 0; 
         Game.minigame.collectibles = [];
         
-        // Reseta Posição e Inputs
         Game.minigame.player = { x: 415, y: 480, w: 40, h: 40, color: '#880afe', type: 'player' };
         Input.keys = {}; 
         Input.touch.active = false;
@@ -785,5 +782,17 @@ const Renderer = {
             ctx.beginPath(); ctx.arc(Input.touch.currentX, Input.touch.currentY, 20, 0, Math.PI * 2); ctx.fill();
         }
         ctx.textAlign = "start"; 
+    }
+};
+
+// --- 7. UTILITÁRIOS ---
+
+const UI = {
+    hideNovel: () => {
+        document.getElementById("novel-layer").style.display = "none";
+        document.getElementById("game-canvas").style.display = "block";
+    },
+    showJubilometro: (show) => {
+        document.getElementById('jubilometro-container').style.display = show ? 'flex' : 'none';
     }
 };
