@@ -1,5 +1,3 @@
-
-
 const Transition = {
     active: false,
     type: null,
@@ -105,6 +103,7 @@ const Game = {
     currentScene: null,
     canvas: null,
     ctx: null,
+    inventory: [],
     
     minigame: {
         mode: null, 
@@ -145,24 +144,12 @@ const Scripts = {
         text: "Vou testar seu conhecimento. O Jubilômetro não pode chegar a 100%!", 
         choices: [{ text: "Começar Teste", action: "START_KAL_QUIZ" }] 
     },
-    "kal_jubilado": {
-        bg: Assets.bg.gameover,
-        char: "nobody",
-        text: "JUBILADO! Você atingiu 100% no Jubilômetro. Tente novamente!",
-        choices: [{ text: "Tentar Novamente", action: "START_KAL_QUIZ" }, 
-                  { text: "Voltar ao Início", next: "inicio" }]
-    },
-    "kal_win": {
-        bg: Assets.bg.resun,
-        char: "kalelfreira",
-        text: "Parabéns! Você dominou as normas sem ser jubilado! Isso merece um café especial.",
-        choices: [{ text: "Pegar Café Especial", next: "end_cafe" },
-                  { text: "Voltar ao Início", next: "inicio" }]
-    },
+    "kal_jubilado": { bg: Assets.bg.gameover, char: "nobody", text: "JUBILADO! Você atingiu 100% no Jubilômetro. Tente novamente!", choices: [{ text: "Tentar Novamente", action: "START_KAL_QUIZ" }, { text: "Voltar ao Início", next: "inicio" }] },
+    "kal_win": { bg: Assets.bg.resun, char: "kalelfreira", text: "Parabéns! Você dominou as normas sem ser jubilado! Isso merece um café especial.", choices: [{ text: "Pegar Café Especial", next: "end_cafe" }, { text: "Voltar ao Início", next: "inicio" }] },
 
     // ROTA ADCOFFEE
     "ad_intro": { bg: Assets.bg.adufs, char: "pinguitor", text: "Colete 10 broches e fuja do Big C!", choices: [{ text: "Vamos nessa!", action: "START_ARENA" }] },
-    "ad_win": { bg: Assets.bg.adufs, char: "pinguitor", text: "Você venceu! O Café Lendário é seu.", choices: [{ text: "Pegar Café", next: "end_cafe" }] },
+    "ad_win": { bg: Assets.bg.adufs, char: "pinguitor", text: "Você venceu! Tome este Café Lendário.", choices: [{ text: "Pegar Café", action: "GET_REWARD_CAFE" }] },
     "ad_lose": { bg: Assets.bg.adufs, char: "bigc", text: "O Big C te pegou! Mais sorte na próxima.", choices: [{ text: "Revanche", action: "START_ARENA" }, { text: "Desistir", next: "inicio" }] },
 
     // FINAIS
@@ -298,6 +285,11 @@ const Engine = {
                 if (c.action === "START_ARENA") Minigame.startArena();
                 else if (c.action === "START_KAL_QUIZ") KalElSystem.start();
                 else if (c.action === "START_MAZE") Minigame.startMaze();
+                else if (c.action === "GET_REWARD_CAFE") {
+                    Game.inventory.push('cafe'); 
+                    if(window.atualizarHudInventario) window.atualizarHudInventario();
+                    Engine.loadScene('end_cafe'); 
+                }
                 else Engine.loadScene(c.next);
             };
             choicesDiv.appendChild(btn);
@@ -619,6 +611,65 @@ window.onload = () => {
     };
 };
 
+const CoffeeBreakSystem = {
+    isActive: false,
+    
+    // Verifica se pode reviver
+    tryRevive: (callbackAfterRevive) => {
+        // Verifica se tem 'cafe' no inventario (baseado no código que discutimos antes)
+        // Se você ainda não integrou o inventario global, assumimos que Game.inventory existe
+        const index = (Game.inventory || []).indexOf('cafe');
+        
+        if (index > -1) {
+            // Consome o item
+            Game.inventory.splice(index, 1); 
+            if(window.atualizarHudInventario) window.atualizarHudInventario(); // Atualiza visual se existir
+
+            CoffeeBreakSystem.triggerEffect(callbackAfterRevive);
+            return true; // Reviveu com sucesso
+        }
+        return false; // Morreu de verdade
+    },
+
+    triggerEffect: (callback) => {
+        CoffeeBreakSystem.isActive = true;
+        const overlay = document.getElementById('coffee-break-overlay');
+        const text = document.getElementById('coffee-break-text');
+        
+        // Pausa som e toca SFX se tiver
+        // AudioSys.playSFX('sfx-powerup'); 
+
+        overlay.style.display = 'flex';
+        
+        // Remove a animação anterior para reiniciar
+        text.style.animation = 'none';
+        text.offsetHeight; /* trigger reflow */
+        text.style.animation = 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
+        // Animação de "explosão" que afasta inimigos (Opcional: empurrar inimigos no array entities)
+        Game.minigame.entities.forEach(ent => {
+            if(ent.type === 'enemy') {
+                // Afasta inimigos em 100px para dar espaço
+                const dx = ent.x - Game.minigame.player.x;
+                const dy = ent.y - Game.minigame.player.y;
+                ent.x += (dx > 0 ? 100 : -100);
+                ent.y += (dy > 0 ? 100 : -100);
+            }
+        });
+
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            CoffeeBreakSystem.isActive = false;
+            
+            // Dá 2 segundos de invencibilidade
+            Game.minigame.player.invincible = true;
+            setTimeout(() => { Game.minigame.player.invincible = false; }, 2000);
+
+            if (callback) callback();
+        }, 2500); // O efeito dura 2.5 segundos
+    }
+};
+
 // --- 5. FÍSICA E COLISÃO ---
 
 const Physics = {
@@ -627,11 +678,13 @@ const Physics = {
         let dx = 0, dy = 0;
         const speed = 5;
 
+        // Movimentação
         if (Input.keys.ArrowUp || Input.keys.w) dy = -speed;
         if (Input.keys.ArrowDown || Input.keys.s) dy = speed;
         if (Input.keys.ArrowLeft || Input.keys.a) dx = -speed;
         if (Input.keys.ArrowRight || Input.keys.d) dx = speed;
 
+        // Touch
         if (!Input.touch.active && (Input.touch.velocityX !== 0 || Input.touch.velocityY !== 0)) {
             dx += Input.touch.velocityX;
             dy += Input.touch.velocityY;
@@ -651,6 +704,7 @@ const Physics = {
             if (nextY >= 0 && nextY + player.h <= height) player.y = nextY;
         }
 
+        // --- COLISÕES (AQUI ESTÁ A MUDANÇA) ---
         Game.minigame.entities.forEach(ent => {
             if (CheckCollision(player, ent)) {
                 if (ent.type === 'wall') {
@@ -665,15 +719,32 @@ const Physics = {
                             if (pcY - ecY > 0) player.y = ent.y + ent.h; else player.y = ent.y - player.h;
                         }
                     }
-                } else if (Game.minigame.mode === 'ARENA') {
+                } 
+                
+                // --- INTEGRANDO O COFFEE BREAK NA ARENA ---
+                else if (Game.minigame.mode === 'ARENA') {
                     if (ent.type === 'enemy') {
-                        AudioSys.playSFX('sfx-lose');
-                        Engine.loadScene('ad_lose');
+                        // Verifica se não está invencível E tenta usar o café
+                        if (!player.invincible && !CoffeeBreakSystem.isActive) {
+                            const revived = CoffeeBreakSystem.tryRevive(() => {
+                                console.log("Ressuscitou pelo café!");
+                            });
+                            
+                            // Se não reviver (não tem café), dá Game Over
+                            if (!revived) {
+                                AudioSys.playSFX('sfx-lose');
+                                Engine.loadScene('ad_lose');
+                            }
+                        }
                     }
-                } else if (Game.minigame.mode === 'QUIZ') {
+                } 
+                
+                // --- INTEGRANDO O COFFEE BREAK NO QUIZ ---
+                else if (Game.minigame.mode === 'QUIZ') {
                     if (ent.type === 'door') {
                         const currentQ = QuizData[Game.minigame.quizLevel];
                         if (ent.answerIndex === currentQ.correta) {
+                            // Acertou (mantém lógica antiga)
                             AudioSys.playSFX('sfx-collect');
                             Game.minigame.quizLevel++;
                             if (Game.minigame.quizLevel >= QuizData.length) Engine.loadScene('gw_win');
@@ -683,16 +754,27 @@ const Physics = {
                                 Input.touch.velocityX = 0; Input.touch.velocityY = 0; Input.touch.active = false;
                             }
                         } else {
-                            AudioSys.playSFX('sfx-lose');
-                            Game.minigame.player.x = 415;
-                            Game.minigame.player.y = 480;
-                            Engine.loadScene('gw_lose');
+                            // Errou a porta (Tenta usar café)
+                            if (!player.invincible) {
+                                const revived = CoffeeBreakSystem.tryRevive(() => {
+                                    player.y += 100; // Empurra pra trás
+                                });
+
+                                if (!revived) {
+                                    AudioSys.playSFX('sfx-lose');
+                                    Game.minigame.player.x = 415;
+                                    Game.minigame.player.y = 480;
+                                    Engine.loadScene('gw_lose');
+                                }
+                            }
                         }
                     } else if (ent.type === 'spike') {
                         Engine.loadScene('gw_lose');
                     }
                 }
             }
+            
+            // IA Inimigo
             if (ent.type === 'enemy' && Game.minigame.mode === 'ARENA') {
                 const dx = player.x - ent.x, dy = player.y - ent.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
@@ -700,6 +782,7 @@ const Physics = {
             }
         });
 
+        // Coletáveis
         let collectedCount = 0;
         if (Game.minigame.mode === 'ARENA') {
             Game.minigame.collectibles.forEach(c => {
@@ -711,7 +794,6 @@ const Physics = {
         }
     }
 };
-
 const CheckCollision = (r1, r2) => (r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y);
 
 // --- 6. RENDERIZAÇÃO ---
@@ -722,20 +804,14 @@ const Renderer = {
         ctx.fillStyle = Game.minigame.mode === 'ARENA' ? "#333" : "#222";
         ctx.fillRect(0, 0, Game.canvas.width, Game.canvas.height);
 
+        // Desenha Texto do Quiz e Arena (igual ao anterior)
         if (Game.minigame.mode === 'QUIZ') {
             const q = QuizData[Game.minigame.quizLevel];
-            // PROTEÇÃO CONTRA CRASH: Se não houver pergunta (erro de indice), para de desenhar
             if (!q) return; 
-
             ctx.fillStyle = "#fff"; ctx.font = "bold 24px Arvo"; ctx.textAlign = "center";
             ctx.fillText(q.pergunta, Game.canvas.width / 2, 60);
             ctx.font = "16px Arvo"; ctx.fillStyle = "#aaa";
             ctx.fillText("Escolha a porta correta:", Game.canvas.width / 2, 90);
-            
-            if (window.innerWidth <= 768 || Input.touch.active) {
-                ctx.font = "14px Arvo"; ctx.fillStyle = "#4CAF50";
-                ctx.fillText("Toque/Arraste o boneco ou clique nas portas", Game.canvas.width / 2, Game.canvas.height - 20);
-            }
         }
         
         if (Game.minigame.mode === 'ARENA' && (window.innerWidth <= 768 || Input.touch.active)) {
@@ -744,6 +820,7 @@ const Renderer = {
             ctx.fillText("Fuja dos inimigos vermelhos!", Game.canvas.width / 2, Game.canvas.height - 40);
         }
 
+        // Desenha Entidades (Portas, Paredes, Inimigos)
         Game.minigame.entities.forEach(e => {
             if (e.type === 'door') {
                 ctx.fillStyle = e.color || '#8B4513'; ctx.fillRect(e.x, e.y, e.w, e.h);
@@ -763,6 +840,7 @@ const Renderer = {
             }
         });
 
+        // Desenha Coletáveis
         if (Game.minigame.mode === 'ARENA') {
             ctx.fillStyle = "gold";
             Game.minigame.collectibles.forEach(c => {
@@ -773,10 +851,21 @@ const Renderer = {
             });
         }
 
+        // --- DESENHA O JOGADOR (COM EFEITO DE PISCAR) ---
         const p = Game.minigame.player;
+        
+        // Se estiver invencível, fica transparente piscando
+        if (p.invincible) {
+            if (Math.floor(Date.now() / 100) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+        }
+
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.w, p.h);
         
+        ctx.globalAlpha = 1.0; // Restaura a opacidade para o resto do desenho
+
         if (Input.touch.active) {
             ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
             ctx.beginPath(); ctx.arc(Input.touch.currentX, Input.touch.currentY, 20, 0, Math.PI * 2); ctx.fill();
@@ -795,4 +884,26 @@ const UI = {
     showJubilometro: (show) => {
         document.getElementById('jubilometro-container').style.display = show ? 'flex' : 'none';
     }
+};
+
+window.atualizarHudInventario = () => {
+    const box = document.getElementById('inventory-box');
+    if (!box) return; // Proteção caso o HTML não exista
+
+    box.innerHTML = ''; // Limpa
+
+    Game.inventory.forEach(item => {
+        const divItem = document.createElement('div');
+        divItem.className = 'inv-item';
+        
+        if(item === 'cafe') {
+            divItem.innerHTML = '☕'; 
+            divItem.title = "Café: Vida Extra";
+        }
+        
+        box.appendChild(divItem);
+    });
+
+    // Esconde se vazio
+    box.style.display = Game.inventory.length === 0 ? 'none' : 'flex';
 };
