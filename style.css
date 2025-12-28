@@ -301,14 +301,14 @@ canvas {
     pointer-events: auto;
 }
 
-#inventory-box {
+/*#inventory-box {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     border-radius: 15px;
     padding: 10px 15px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
-}
+}*/
 
 .inv-item {
     width: 35px;
