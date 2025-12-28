@@ -625,3 +625,59 @@ canvas {
         display: flex;
     }
 }
+
+/* Overlay do Coffee Break (Estilo Hades) */
+#coffee-break-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.9) 100%);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999;
+    animation: pulseBackground 2s infinite;
+}
+
+#coffee-break-text {
+    font-family: 'Arvo', serif;
+    font-size: 5rem;
+    color: #ffd700; /* Dourado */
+    text-transform: uppercase;
+    text-shadow: 
+        0 0 10px #ffaa00,
+        0 0 20px #ffaa00,
+        0 0 40px #ff4400;
+    transform: scale(0);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+#coffee-break-sub {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    color: #fff;
+    margin-top: 10px;
+    opacity: 0;
+    animation: fadeIn 1s 0.5s forwards;
+}
+
+/* Animação do Jogador Piscando (Invencibilidade) */
+.invincible {
+    opacity: 0.5;
+    animation: blink 0.2s infinite;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    80% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes blink {
+    0% { opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
