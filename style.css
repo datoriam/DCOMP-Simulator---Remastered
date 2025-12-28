@@ -1,4 +1,4 @@
-/* style.css - VERSÃO MELHORADA */
+/* style.css - VERSÃO FINAL CORRIGIDA */
 
 @import url('https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
@@ -13,6 +13,7 @@
     --text-light: #fff;
 }
 
+/* --- ESTILOS GERAIS --- */
 body {
     background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 50%, #16213e 100%);
     background-image: url("assets/cidadefundosite.jpg");
@@ -40,6 +41,7 @@ body::before {
     z-index: -1;
 }
 
+/* --- CONTAINER DO JOGO --- */
 #game-container {
     position: relative;
     width: 900px;
@@ -60,7 +62,7 @@ body::before {
     transform: translateY(-5px) scale(1.005);
 }
 
-/* Efeito de brilho nas bordas */
+/* Brilho nas bordas */
 #game-container::before {
     content: '';
     position: absolute;
@@ -84,16 +86,19 @@ canvas {
     display: none;
     background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
     image-rendering: pixelated;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
-/* NOVEL LAYER IMPROVEMENTS */
+/* --- CAMADAS DA NOVEL --- */
 #novel-layer {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Isso bloqueia tudo */
+    pointer-events: none;
     z-index: 10;
 }
 
@@ -108,23 +113,20 @@ canvas {
     transition: filter 0.5s ease;
 }
 
-/* CHARACTER LAYER COM EFEITOS */
+/* PERSONAGEM */
 #character-layer {
     position: absolute;
     bottom: 0;
-    right: 0; /* Cola na direita da tela */
-    left: auto; /* Garante que não use o left */
-    width: 50%; /* Ocupa a metade direita da tela */
+    right: 0;
+    left: auto;
+    width: 50%;
     height: 100%;
-    z-index: 2; /* Fica acima do fundo (0), mas abaixo do diálogo (5) */
-
-    /* Flexbox para alinhar a imagem no canto inferior direito */
+    z-index: 2;
     display: flex;
     align-items: flex-end; 
     justify-content: flex-end;
-
-    padding-right: 20px; /* Um pequeno espaçamento da borda */
-    pointer-events: none; /* Importante: deixa clicar no que estiver atrás/frente se precisar */
+    padding-right: 20px;
+    pointer-events: none;
 }
 
 #character-layer::after {
@@ -140,11 +142,9 @@ canvas {
 }
 
 #character-layer img {
-    max-height: 85%; /* Altura máxima para não cortar a cabeça */
-    max-width: 100%; /* Não deixa estourar a largura */
-    object-fit: contain; /* Garante a proporção da imagem */
-    
-    /* Seus efeitos de animação mantidos: */
+    max-height: 85%;
+    max-width: 100%;
+    object-fit: contain;
     animation: float 3s ease-in-out infinite;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
 }
@@ -154,23 +154,20 @@ canvas {
     50% { transform: translateY(-10px); }
 }
 
-/* DIALOGUE BOX MODERNIZADA */
+/* --- CAIXA DE DIÁLOGO --- */
 #dialogue-box {
     position: absolute;
     bottom: 30px;
     left: 35%;
     transform: translateX(-50%);
     width: 60%;
-    /* ADICIONE ESTA LINHA AQUI EMBAIXO: */
-    pointer-events: auto; /* Isso reativa o clique na caixa de texto */
+    pointer-events: auto;
     background: linear-gradient(to bottom, var(--light-bg) 0%, rgba(255, 255, 255, 0.98) 100%);
-    background: linear-gradient(to bottom, var(--light-bg) 0%, rgba(255, 255, 255, 0.98) 100%);
-    border: none;
     border-radius: 20px;
     padding: 25px;
     color: var(--text-dark);
     box-sizing: border-box;
-    z-index: 05;
+    z-index: 5;
     min-height: 140px;
     backdrop-filter: blur(10px);
     box-shadow: 
@@ -219,7 +216,7 @@ canvas {
     font-weight: 500;
 }
 
-/* CHOICES CONTAINER MELHORADO */
+/* --- BOTÕES DE ESCOLHA --- */
 #choices-container {
     display: flex;
     flex-direction: column;
@@ -266,9 +263,7 @@ canvas {
         0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
-.choice-btn:hover::before {
-    left: 100%;
-}
+.choice-btn:hover::before { left: 100%; }
 
 .choice-btn:active {
     transform: translateY(-1px);
@@ -289,7 +284,7 @@ canvas {
     transform: translateX(0);
 }
 
-/* HUD LAYER MODERNIZADO */
+/* --- HUD / INTERFACE (Inventário e Jubilômetro) --- */
 #hud-layer {
     position: absolute;
     top: 20px;
@@ -297,18 +292,15 @@ canvas {
     z-index: 20;
     display: flex;
     gap: 15px;
-    align-items: center;
+    align-items: flex-start; /* Alinhamento corrigido */
     pointer-events: auto;
 }
 
-/*#inventory-box {
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 10px 15px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}*/
+/* Inventário */
+#inventory-box {
+    display: flex;
+    gap: 5px;
+}
 
 .inv-item {
     width: 35px;
@@ -319,10 +311,10 @@ canvas {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: 8px;
     position: relative;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    font-size: 1.2em; /* Tamanho do emoji */
 }
 
 .inv-item:hover {
@@ -330,126 +322,60 @@ canvas {
     box-shadow: 0 0 15px #ffaa00;
 }
 
-.inv-item::before {
-    content: '';
-    position: absolute;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transform: skewX(-20deg);
-    animation: shine 2s infinite;
-}
-
-@keyframes shine {
-    0% { left: -100%; }
-    50%, 100% { left: 100%; }
-}
-
-/* PARTÍCULAS DECORATIVAS */
-.particles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.particle {
-    position: absolute;
-    background: var(--primary-color);
-    border-radius: 50%;
-    opacity: 0.3;
-}
-
-/* TÍTULO DO JOGO (opcional) */
-.game-title {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    color: white;
-    font-size: 1.8em;
-    font-weight: bold;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.game-title::before {
-    content: '';
-    width: 40px;
-    height: 40px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    display: inline-block;
-}
-
-/* LOADING STATE */
-.loading-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--dark-bg);
+/* Jubilômetro */
+#jubilometro-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    z-index: 100;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    border-radius: 12px;
+    border: 2px solid #ff4444;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+    width: 200px;
+    backdrop-filter: blur(5px);
+}
+
+.jubilo-label {
+    color: #ff4444;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+}
+
+.jubilo-bar-bg {
+    width: 100%;
+    height: 20px;
+    background: #333;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #555;
+}
+
+#jubilo-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffeb3b, #ff0000);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+#jubilo-pct {
     color: white;
+    font-family: 'Courier New', monospace;
+    margin-top: 5px;
+    font-size: 0.8em;
 }
 
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid transparent;
-    border-top: 5px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* RESPONSIVIDADE */
-@media (max-width: 920px) {
-    #game-container {
-        width: 95vw;
-        height: 95vh;
-        max-width: 878px;
-        max-height: 560px;
-    }
-    
-    #character-layer {
-        right: 2%;
-        height: 70%;
-    }
-    
-    #character-layer img {
-        max-width: 300px;
-    }
-    
-    #dialogue-box {
-        width: 90%;
-        padding: 20px;
-    }
-}
-/* TELA DE LOADING / START */
+/* --- TELA DE LOADING E START --- */
 #loading-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #0a0a15; /* Fundo escuro */
-    z-index: 9999; /* Garante que fique acima de tudo */
+    background: #0a0a15;
+    z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -460,24 +386,31 @@ canvas {
 .loader-content {
     text-align: center;
     width: 100%;
-    max-width: 600px;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza o conteúdo horizontalmente */
+    justify-content: center;
 }
 
 .game-title {
+    /* Estilo para dentro do jogo e tela de loading */
     font-size: 3.5em;
     color: var(--primary-color);
     text-shadow: 0 0 20px rgba(91, 20, 222, 0.6);
     margin-bottom: 50px;
     letter-spacing: 4px;
     font-family: 'Arvo', serif;
+    text-align: center;
+    line-height: 1.2;
 }
 
-/* Animação de Carregamento (Círculo girando) */
+/* Spinner */
 .spinner {
     width: 50px;
     height: 50px;
     border: 5px solid rgba(255,255,255,0.1);
-    border-top: 5px solid var(--secondary-color); /* Laranja */
+    border-top: 5px solid var(--secondary-color);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 20px auto;
@@ -494,10 +427,10 @@ canvas {
     color: #aaa;
 }
 
-/* Botão de Iniciar */
+/* Botão Start */
 #btn-start {
     background: transparent;
-    border: 2px solid var(--accent-color); /* Verde */
+    border: 2px solid var(--accent-color);
     color: var(--accent-color);
     padding: 15px 50px;
     font-size: 1.5em;
@@ -522,68 +455,58 @@ canvas {
     100% { transform: scale(1); }
 }
 
-#jubilometro-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 10px;
-    border-radius: 12px;
-    border: 2px solid #ff4444; /* Vermelho alerta */
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
-    width: 200px;
-}
-
-.jubilo-label {
-    color: #ff4444;
-    font-weight: bold;
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    letter-spacing: 2px;
-}
-
-.jubilo-bar-bg {
+/* --- OVERLAY COFFEE BREAK --- */
+#coffee-break-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 20px;
-    background: #333;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #555;
-}
-
-#jubilo-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ffeb3b, #ff0000); /* Amarelo para Vermelho */
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.9) 100%);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999;
 }
 
-#jubilo-pct {
-    color: white;
-    font-family: 'Courier New', monospace;
-    margin-top: 5px;
-    font-size: 0.8em;
+#coffee-break-text {
+    font-family: 'Arvo', serif;
+    font-size: 5rem;
+    color: #ffd700;
+    text-transform: uppercase;
+    text-shadow: 
+        0 0 10px #ffaa00,
+        0 0 20px #ffaa00,
+        0 0 40px #ff4400;
+    transform: scale(0);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    text-align: center;
 }
-   #game-canvas {
-        touch-action: none; /* Impede zoom e scroll no canvas */
-        -webkit-user-select: none; /* Impede seleção de texto no iOS */
-        user-select: none;
-    }
-    
-    @media (max-width: 768px) {
-        #game-canvas {
-            width: 100%;
-            height: 70vh;
-        }
-        
-        .choice-btn {
-            min-height: 50px;
-            font-size: 16px;
-            margin: 8px 0;
-        }
-    }
-    #mobile-warning {
-    display: none; /* Escondido por padrão */
+
+#coffee-break-sub {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    color: #fff;
+    margin-top: 10px;
+    opacity: 0;
+    animation: fadeIn 1s 0.5s forwards;
+    text-align: center;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    80% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* --- AVISO MOBILE --- */
+#mobile-warning {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -599,15 +522,8 @@ canvas {
     box-sizing: border-box;
 }
 
-.warning-content h1 {
-    color: #ff4444;
-    font-size: 2em;
-}
-
-.warning-content p {
-    font-size: 1.2em;
-    margin: 20px 0;
-}
+.warning-content h1 { color: #ff4444; font-size: 2em; }
+.warning-content p { font-size: 1.2em; margin: 20px 0; }
 
 #btn-force-mobile {
     padding: 15px 30px;
@@ -619,65 +535,47 @@ canvas {
     margin-top: 20px;
 }
 
-/* Mostra o aviso apenas se a tela for menor que 900px */
-@media (max-width: 900px) {
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 920px) {
+    #game-container {
+        width: 95vw;
+        height: 95vh;
+        max-width: 878px;
+        max-height: 560px;
+    }
+    
+    #character-layer {
+        right: 2%;
+        height: 70%;
+    }
+    
+    #character-layer img {
+        max-width: 300px;
+    }
+    
+    #dialogue-box {
+        width: 90%;
+        padding: 20px;
+    }
+
     #mobile-warning {
-        display: flex;
+        display: flex; /* Mostra aviso em telas pequenas */
+    }
+    
+    .game-title {
+        font-size: 2.5em; /* Reduz título no mobile */
     }
 }
 
-/* Overlay do Coffee Break (Estilo Hades) */
-#coffee-break-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.9) 100%);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    z-index: 9999;
-    animation: pulseBackground 2s infinite;
-}
-
-#coffee-break-text {
-    font-family: 'Arvo', serif;
-    font-size: 5rem;
-    color: #ffd700; /* Dourado */
-    text-transform: uppercase;
-    text-shadow: 
-        0 0 10px #ffaa00,
-        0 0 20px #ffaa00,
-        0 0 40px #ff4400;
-    transform: scale(0);
-    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-#coffee-break-sub {
-    font-family: 'Courier New', monospace;
-    font-size: 1.5rem;
-    color: #fff;
-    margin-top: 10px;
-    opacity: 0;
-    animation: fadeIn 1s 0.5s forwards;
-}
-
-/* Animação do Jogador Piscando (Invencibilidade) */
-.invincible {
-    opacity: 0.5;
-    animation: blink 0.2s infinite;
-}
-
-@keyframes popIn {
-    0% { transform: scale(0); opacity: 0; }
-    80% { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes blink {
-    0% { opacity: 0.2; }
-    50% { opacity: 1; }
-    100% { opacity: 0.2; }
+@media (max-width: 768px) {
+    #game-canvas {
+        width: 100%;
+        height: 70vh;
+    }
+    
+    .choice-btn {
+        min-height: 50px;
+        font-size: 16px;
+        margin: 8px 0;
+    }
 }
