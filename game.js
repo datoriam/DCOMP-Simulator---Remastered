@@ -117,35 +117,22 @@ const Game = {
 
 // --- 2. ROTEIRO ---
 const Scripts = {
-    "inicio": {
-        bg: Assets.bg.ufs, char: "pinguitor",
-        text: "Olá! Seja bem-vindo ao DCOMP! Eu sou o Pinguitor. Escolha uma rota:",
-        choices: [
-            { text: "A. Rota do Peregrino (Good Ways)", next: "gw_ola" },
-            { text: "B. Rota do Arauto (Kal-El)", next: "kal_ola" },
-            { text: "C. Rota do AdCoffee (Desafio)", next: "ad_intro" }
-        ]
-    },
-    
+    "inicio": { bg: Assets.bg.ufs, char: "pinguitor", text: "Olá! Seja bem-vindo ao DCOMP! Eu sou o Pinguitor. Escolha uma rota:", choices: [{ text: "A. Rota do Peregrino (Good Ways)", next: "gw_ola" }, { text: "B. Rota do Arauto (Kal-El)", next: "kal_ola" }, { text: "C. Rota do AdCoffee (Desafio)", next: "ad_intro" }] },
+
     // ROTA GOOD WAYS (QUIZ)
     "gw_ola": { bg: Assets.bg.resun, char: "goodways", text: "Dcomper, viva! Hoje te guiarei pelos bons caminhos!", choices: [{ text: "Quem é você?", next: "gw_intro" }] },
     "gw_intro": { bg: Assets.bg.resun, char: "goodways", text: "Sou Good Ways, professor do DCOMP e secretário da SBC!", choices: [{ text: "O que é SBC?", next: "gw_sbc" }] },
     "gw_sbc": { bg: Assets.bg.resun, char: "goodways", text: "Sociedade Brasileira de Computação! Contribuímos da formação aos eventos.", choices: [{ text: "Entendi. Vamos começar?", next: "gw_lab_intro" }] },
     "gw_lab_intro": { bg: Assets.bg.resun, char: "goodways", text: "Para ser um Dcomper, responda as perguntas corretamente nas portas!", choices: [{ text: "Estou pronto!", action: "START_MAZE" }] },
-    "gw_win": { bg: Assets.bg.resun, char: "goodways", text: "Viva! Você concluiu a missão! Pegue sua recompensa.", choices: [{ text: "Pegar Pergaminho", next: "end_pergaminho" }] },
+    "gw_win": { bg: Assets.bg.resun, char: "goodways", text: "Viva! Você concluiu a missão! Pegue sua recompensa.", choices: [{ text: "Pegar Pergaminho", action: "GET_REWARD_SCROLL" }] },
     "gw_lose": { bg: Assets.bg.gameover, char: "nobody", text: "VOCÊ ERROU A PORTA! Tentar de novo?", choices: [{ text: "Tentar Novamente", action: "START_MAZE" }, { text: "Voltar ao Início", next: "inicio" }] },
 
     // ROTA KAL-EL
     "kal_ola": { bg: Assets.bg.reitoria, char: "kalelfreira", text: "Olá! Sou Kal-El Freira. Vou lhe ensinar as normas!", choices: [{ text: "Normas?", next: "kal_selva" }] },
     "kal_selva": { bg: Assets.bg.reitoria, char: "kalelfreira", text: "A UFS é uma selva. As normas te protegem!", choices: [{ text: "Entendi", next: "kal_missao" }] },
-    "kal_missao": { 
-        bg: Assets.bg.reitoria, 
-        char: "kalelfreira", 
-        text: "Vou testar seu conhecimento. O Jubilômetro não pode chegar a 100%!", 
-        choices: [{ text: "Começar Teste", action: "START_KAL_QUIZ" }] 
-    },
+    "kal_missao": { bg: Assets.bg.reitoria, char: "kalelfreira", text: "Vou testar seu conhecimento. O Jubilômetro não pode chegar a 100%!", choices: [{ text: "Começar Teste", action: "START_KAL_QUIZ" }] },
     "kal_jubilado": { bg: Assets.bg.gameover, char: "nobody", text: "JUBILADO! Você atingiu 100% no Jubilômetro. Tente novamente!", choices: [{ text: "Tentar Novamente", action: "START_KAL_QUIZ" }, { text: "Voltar ao Início", next: "inicio" }] },
-    "kal_win": { bg: Assets.bg.resun, char: "kalelfreira", text: "Parabéns! Você dominou as normas sem ser jubilado! Isso merece um café especial.", choices: [{ text: "Pegar Café Especial", next: "end_cafe" }, { text: "Voltar ao Início", next: "inicio" }] },
+    "kal_win": { bg: Assets.bg.resun, char: "kalelfreira", text: "Parabéns! Você dominou as normas sem ser jubilado! Isso merece um café especial.", choices: [{ text: "Pegar Café Especial", action: "GET_REWARD_CAFE" }] },
 
     // ROTA ADCOFFEE
     "ad_intro": { bg: Assets.bg.adufs, char: "pinguitor", text: "Colete 10 broches e fuja do Big C!", choices: [{ text: "Vamos nessa!", action: "START_ARENA" }] },
@@ -172,25 +159,44 @@ const NormasData = [
 const KalElSystem = {
     meter: 0,
     questionsQueue: [],
+    scrollCharges: 0, // Variável para contar os usos restantes
     
     start: () => {
         KalElSystem.meter = 0;
         KalElSystem.questionsQueue = [...NormasData].sort(() => Math.random() - 0.5);
+        
+        // NERF: Se tiver o pergaminho, define apenas 3 cargas de proteção
+        KalElSystem.scrollCharges = Game.inventory.includes('pergaminho') ? 3 : 0;
+        
         UI.showJubilometro(true);
         KalElSystem.updateDisplay();
         KalElSystem.showNextQuestion();
     },
 
     showNextQuestion: () => {
+        // Função auxiliar para consumir o item ao final do jogo (Vitória ou Derrota)
+        const consumirPergaminhoFinal = () => {
+            const idx = Game.inventory.indexOf('pergaminho');
+            if (idx > -1) {
+                Game.inventory.splice(idx, 1); // Remove do inventário
+                if(window.atualizarHudInventario) window.atualizarHudInventario();
+                console.log("O Pergaminho se desfez após o uso.");
+            }
+        };
+
+        // DERROTA
         if (KalElSystem.meter >= 100) {
             UI.showJubilometro(false);
+            consumirPergaminhoFinal(); // Item some
             Engine.loadScene("kal_jubilado");
             return;
         }
 
+        // VITÓRIA
         if (KalElSystem.questionsQueue.length === 0) {
             UI.showJubilometro(false);
-            Engine.loadScene("kal_win");
+            consumirPergaminhoFinal(); // Item some
+            Engine.loadScene("kal_win"); // Lá na cena 'kal_win' você pegará o Café
             return;
         }
 
@@ -203,10 +209,16 @@ const KalElSystem = {
         const total = NormasData.length;
         const atual = total - KalElSystem.questionsQueue.length;
 
+        // Texto dinâmico mostrando quantas cargas restam
+        let avisoPergaminho = "";
+        if (KalElSystem.scrollCharges > 0) {
+            avisoPergaminho = `\n(📜 PERGAMINHO ATIVO: Proteção por mais ${KalElSystem.scrollCharges} perguntas)`;
+        }
+
         const sceneData = {
             bg: Assets.bg.reitoria,
             char: avatar,
-            text: `(Pergunta ${atual}/${total}) - Risco: ${KalElSystem.meter}%\n\n${q.p}`,
+            text: `(Pergunta ${atual}/${total}) - Risco: ${KalElSystem.meter}%${avisoPergaminho}\n\n${q.p}`,
             choices: q.r.map((resp, index) => ({
                 text: resp,
                 action: index === q.c ? "KAL_CORRECT" : "KAL_WRONG" 
@@ -217,15 +229,29 @@ const KalElSystem = {
     },
 
     processAnswer: (isCorrect) => {
+        // Lógica de consumo: Passou uma pergunta, gasta uma carga (se tiver)
+        let protegido = false;
+        if (KalElSystem.scrollCharges > 0) {
+            protegido = true;
+            KalElSystem.scrollCharges--; 
+        }
+
         if (isCorrect) {
+            // Acertou: diminui risco (bônus normal)
             if (KalElSystem.meter > 0) {
                 KalElSystem.meter = Math.max(0, KalElSystem.meter - 10);
             }
             AudioSys.playSFX('sfx-collect');
         } else {
-            KalElSystem.meter += 25;
-            AudioSys.playSFX('sfx-lose');
-            Transition.screenShake(10, 300);
+            // Errou: Verifica se estava protegido naquela rodada
+            if (protegido) {
+                console.log("O Pergaminho impediu o Jubilômetro de subir!");
+                // Não aumenta o meter, mas toca um som diferente se quiser
+            } else {
+                KalElSystem.meter += 25;
+                AudioSys.playSFX('sfx-lose');
+                Transition.screenShake(10, 300);
+            }
         }
 
         KalElSystem.updateDisplay();
@@ -243,9 +269,15 @@ const KalElSystem = {
         
         fill.style.width = `${Math.min(KalElSystem.meter, 100)}%`;
         
-        if(KalElSystem.meter < 50) fill.style.background = "#4caf50"; 
-        else if(KalElSystem.meter < 80) fill.style.background = "#ff9800"; 
-        else fill.style.background = "#f44336"; 
+        // Fica Azul Ciano enquanto tiver cargas do pergaminho
+        if (KalElSystem.scrollCharges > 0) {
+            fill.style.background = "#00bfff"; 
+        } else {
+            // Cores normais de perigo
+            if(KalElSystem.meter < 50) fill.style.background = "#4caf50"; 
+            else if(KalElSystem.meter < 80) fill.style.background = "#ff9800"; 
+            else fill.style.background = "#f44336"; 
+        }
 
         txt.innerText = `${KalElSystem.meter}%`;
     }
@@ -285,11 +317,25 @@ const Engine = {
                 if (c.action === "START_ARENA") Minigame.startArena();
                 else if (c.action === "START_KAL_QUIZ") KalElSystem.start();
                 else if (c.action === "START_MAZE") Minigame.startMaze();
+                
+                // GANHAR CAFÉ (Venceu Arena OU Kal-El)
                 else if (c.action === "GET_REWARD_CAFE") {
-                    Game.inventory.push('cafe'); 
+                    if (!Game.inventory.includes('cafe')) { // Evita duplicar se já tiver
+                        Game.inventory.push('cafe'); 
+                    }
                     if(window.atualizarHudInventario) window.atualizarHudInventario();
                     Engine.loadScene('end_cafe'); 
                 }
+                
+                // GANHAR PERGAMINHO (Venceu Maze/Good Ways)
+                else if (c.action === "GET_REWARD_SCROLL") {
+                    if (!Game.inventory.includes('pergaminho')) {
+                        Game.inventory.push('pergaminho');
+                    }
+                    if(window.atualizarHudInventario) window.atualizarHudInventario();
+                    Engine.loadScene('end_pergaminho');
+                }
+                
                 else Engine.loadScene(c.next);
             };
             choicesDiv.appendChild(btn);
@@ -616,14 +662,12 @@ const CoffeeBreakSystem = {
     
     // Verifica se pode reviver
     tryRevive: (callbackAfterRevive) => {
-        // Verifica se tem 'cafe' no inventario (baseado no código que discutimos antes)
-        // Se você ainda não integrou o inventario global, assumimos que Game.inventory existe
         const index = (Game.inventory || []).indexOf('cafe');
         
         if (index > -1) {
             // Consome o item
             Game.inventory.splice(index, 1); 
-            if(window.atualizarHudInventario) window.atualizarHudInventario(); // Atualiza visual se existir
+            if(window.atualizarHudInventario) window.atualizarHudInventario(); 
 
             CoffeeBreakSystem.triggerEffect(callbackAfterRevive);
             return true; // Reviveu com sucesso
@@ -636,32 +680,42 @@ const CoffeeBreakSystem = {
         const overlay = document.getElementById('coffee-break-overlay');
         const text = document.getElementById('coffee-break-text');
         
-        // Pausa som e toca SFX se tiver
+        // Toca som se tiver
         // AudioSys.playSFX('sfx-powerup'); 
 
         overlay.style.display = 'flex';
         
-        // Remove a animação anterior para reiniciar
+        // Reinicia animação do texto
         text.style.animation = 'none';
         text.offsetHeight; /* trigger reflow */
         text.style.animation = 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 
-        // Animação de "explosão" que afasta inimigos (Opcional: empurrar inimigos no array entities)
-        Game.minigame.entities.forEach(ent => {
-            if(ent.type === 'enemy') {
-                // Afasta inimigos em 100px para dar espaço
-                const dx = ent.x - Game.minigame.player.x;
-                const dy = ent.y - Game.minigame.player.y;
-                ent.x += (dx > 0 ? 100 : -100);
-                ent.y += (dy > 0 ? 100 : -100);
-            }
-        });
+        // --- EMPURRAR INIMIGOS (PUSH BACK) ---
+        // Empurra os inimigos uma única vez quando ativa
+        if (Game.minigame.entities) {
+            Game.minigame.entities.forEach(ent => {
+                if(ent.type === 'enemy') {
+                    // Calcula a direção para empurrar
+                    const dx = ent.x - Game.minigame.player.x;
+                    const dy = ent.y - Game.minigame.player.y;
+                    
+                    // Empurra 150 pixels para longe
+                    // Se dx for positivo (inimigo à direita), empurra +150, senão -150
+                    ent.x += (dx >= 0 ? 150 : -150);
+                    ent.y += (dy >= 0 ? 150 : -150);
+                    
+                    // Garante que não empurrou para fora do mapa (Opcional, mas bom para evitar bugs)
+                    ent.x = Math.max(50, Math.min(800, ent.x));
+                    ent.y = Math.max(50, Math.min(500, ent.y));
+                }
+            });
+        }
 
         setTimeout(() => {
             overlay.style.display = 'none';
             CoffeeBreakSystem.isActive = false;
             
-            // Dá 2 segundos de invencibilidade
+            // Dá 2 segundos de invencibilidade APÓS a tela sair
             Game.minigame.player.invincible = true;
             setTimeout(() => { Game.minigame.player.invincible = false; }, 2000);
 
@@ -674,6 +728,9 @@ const CoffeeBreakSystem = {
 
 const Physics = {
     update: () => {
+        // --- PAUSA A FÍSICA SE O COFFEE BREAK ESTIVER ATIVO ---
+        if (CoffeeBreakSystem.isActive) return;
+
         const player = Game.minigame.player;
         let dx = 0, dy = 0;
         const speed = 5;
@@ -704,7 +761,7 @@ const Physics = {
             if (nextY >= 0 && nextY + player.h <= height) player.y = nextY;
         }
 
-        // --- COLISÕES (AQUI ESTÁ A MUDANÇA) ---
+        // --- COLISÕES ---
         Game.minigame.entities.forEach(ent => {
             if (CheckCollision(player, ent)) {
                 if (ent.type === 'wall') {
@@ -721,16 +778,16 @@ const Physics = {
                     }
                 } 
                 
-                // --- INTEGRANDO O COFFEE BREAK NA ARENA ---
+                // --- COLISÃO COM INIMIGO (ARENA) ---
                 else if (Game.minigame.mode === 'ARENA') {
                     if (ent.type === 'enemy') {
-                        // Verifica se não está invencível E tenta usar o café
+                        // Se não está invencível E o sistema não está ativo
                         if (!player.invincible && !CoffeeBreakSystem.isActive) {
                             const revived = CoffeeBreakSystem.tryRevive(() => {
-                                console.log("Ressuscitou pelo café!");
+                                console.log("Ressuscitou!");
                             });
                             
-                            // Se não reviver (não tem café), dá Game Over
+                            // Se não tiver café, morre
                             if (!revived) {
                                 AudioSys.playSFX('sfx-lose');
                                 Engine.loadScene('ad_lose');
@@ -739,12 +796,11 @@ const Physics = {
                     }
                 } 
                 
-                // --- INTEGRANDO O COFFEE BREAK NO QUIZ ---
+                // --- COLISÃO NO QUIZ ---
                 else if (Game.minigame.mode === 'QUIZ') {
                     if (ent.type === 'door') {
                         const currentQ = QuizData[Game.minigame.quizLevel];
                         if (ent.answerIndex === currentQ.correta) {
-                            // Acertou (mantém lógica antiga)
                             AudioSys.playSFX('sfx-collect');
                             Game.minigame.quizLevel++;
                             if (Game.minigame.quizLevel >= QuizData.length) Engine.loadScene('gw_win');
@@ -754,10 +810,10 @@ const Physics = {
                                 Input.touch.velocityX = 0; Input.touch.velocityY = 0; Input.touch.active = false;
                             }
                         } else {
-                            // Errou a porta (Tenta usar café)
+                            // Errou a porta
                             if (!player.invincible) {
                                 const revived = CoffeeBreakSystem.tryRevive(() => {
-                                    player.y += 100; // Empurra pra trás
+                                    player.y += 100; // Recua
                                 });
 
                                 if (!revived) {
@@ -774,7 +830,7 @@ const Physics = {
                 }
             }
             
-            // IA Inimigo
+            // IA Inimigo (Só move se o Coffee Break NÃO estiver ativo)
             if (ent.type === 'enemy' && Game.minigame.mode === 'ARENA') {
                 const dx = player.x - ent.x, dy = player.y - ent.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
@@ -888,9 +944,9 @@ const UI = {
 
 window.atualizarHudInventario = () => {
     const box = document.getElementById('inventory-box');
-    if (!box) return; // Proteção caso o HTML não exista
+    if (!box) return; 
 
-    box.innerHTML = ''; // Limpa
+    box.innerHTML = ''; 
 
     Game.inventory.forEach(item => {
         const divItem = document.createElement('div');
@@ -898,7 +954,10 @@ window.atualizarHudInventario = () => {
         
         if(item === 'cafe') {
             divItem.innerHTML = '☕'; 
-            divItem.title = "Café: Vida Extra";
+            divItem.title = "Café: Vida Extra na Arena/Quiz";
+        } else if (item === 'pergaminho') {
+            divItem.innerHTML = '📜'; 
+            divItem.title = "Pergaminho: Congela o Jubilômetro";
         }
         
         box.appendChild(divItem);

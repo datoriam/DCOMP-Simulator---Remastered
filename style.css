@@ -579,3 +579,18 @@ canvas {
         margin: 8px 0;
     }
 }
+
+@keyframes pulseBackground {
+    0% { background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.9) 100%); }
+    50% { background: radial-gradient(circle, rgba(91, 20, 222, 0.6) 0%, rgba(0,0,0,0.95) 100%); }
+    100% { background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.9) 100%); }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+#coffee-break-text {
+    display: block; 
+}
