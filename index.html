@@ -8,7 +8,6 @@
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
 <body>
-
     <div id="mobile-warning">
         <div class="warning-content">
             <h1>⚠️ AVISO ⚠️</h1>
@@ -19,17 +18,18 @@
     </div>
 
     <div id="audio-assets" style="display:none;">
-        <audio id="bgm-main" src="assets/musicadefundodojogo.mp3" loop></audio>
+        <audio id="bgm-main" src="assets/natal_theme.mp3" loop></audio> 
         <audio id="bgm-minigame" src="assets/musicadominigame.mp3" loop></audio>
         <audio id="bgm-maze" src="assets/musicadolabirinto.mp3" loop></audio>
         <audio id="sfx-collect" src="assets/musicadeganharitens.mp3"></audio>
         <audio id="sfx-lose" src="assets/mauscaminhossound.mp3"></audio>
     </div>
 
+    <div id="snow-container"></div>
+
     <div id="loading-screen">
         <div class="loader-content">
-            <h1 class="game-title">DCOMP SIMULATOR</h1>
-            
+            <h1 class="game-title">DCOMP SIMULATOR<br><span style="font-size: 0.5em; color: #fff;">🎄 Special Christmas Edition 🎄</span></h1>
             <div id="loading-state">
                 <div class="spinner"></div>
                 <p id="loading-text">Carregando Assets... 0%</p>
@@ -37,18 +37,31 @@
 
             <div id="start-state" style="display: none;">
                 <p class="ready-text">Sistema Pronto</p>
-                <button id="btn-start">INICIAR JOGO</button>
+                <button id="btn-start">INICIAR JORNADA</button>
             </div>
         </div>
     </div>
 
     <div id="game-container">
-        
         <canvas id="game-canvas" width="878" height="560"></canvas>
         
         <div id="novel-layer">
             <div id="background-layer"></div>
             
+            <div id="click-layer"></div>
+
+            <div id="hud-layer">
+                <div id="inventory-box"></div>
+
+                <div id="jubilometro-container" style="display: none;">
+                    <div class="jubilo-label">JUBILÔMETRO</div>
+                    <div class="jubilo-bar-bg">
+                        <div id="jubilo-fill" style="width: 0%;"></div>
+                    </div>
+                    <div id="jubilo-pct">0%</div>
+                </div>
+            </div>
+
             <div id="character-layer">
                 <img id="char-sprite" src="" alt="Personagem">
             </div>
@@ -58,25 +71,19 @@
                 <p id="dialogue-text"></p>
                 <div id="choices-container"></div>
             </div>
-        </div>
 
-        <div id="hud-layer">
-            <div id="inventory-box"></div>
-            
-            <div id="jubilometro-container" style="display: none;">
-                <span class="jubilo-label">JUBILÔMETRO</span>
-                <div class="jubilo-bar-bg">
-                    <div id="jubilo-fill" style="width: 0%;"></div>
-                </div>
-                <span id="jubilo-pct">0%</span>
+<div id="name-input-modal" style="display: none;">
+                <h2>Identificação Necessária</h2>
+                <p>Por favor, insira seu nome no crachá:</p>
+                <input type="text" id="player-name-input" placeholder="Seu nome aqui..." maxlength="12">
+                <button id="btn-confirm-name">CONFIRMAR</button>
             </div>
+            
+        </div> </div> <div id="coffee-break-overlay" style="display: none;">
+        <div id="coffee-break-content">
+            <h1 id="coffee-break-text">COFFEE BREAK!</h1>
+            <p id="coffee-break-sub">VOCÊ GASTOU 1 CAFÉ PARA REVIVER<br>Pressione qualquer tecla para continuar...</p>
         </div>
-
-    </div>
-
-    <div id="coffee-break-overlay">
-        <div id="coffee-break-text">COFFEE BREAK!</div>
-        <div id="coffee-break-sub">Renasça das cinzas (ou da cafeína)...</div>
     </div>
 
     <script src="game.js"></script>

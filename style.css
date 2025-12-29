@@ -16,7 +16,7 @@
 /* --- ESTILOS GERAIS --- */
 body {
     background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 50%, #16213e 100%);
-    background-image: url("assets/cidadefundosite.jpg");
+    background-image: url("assets/fundodenatal.jpg");
     background-size: cover;
     background-attachment: fixed;
     margin: 0;
@@ -462,12 +462,13 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.9) 100%);
-    display: none;
+    background: radial-gradient(circle, rgba(91, 20, 222, 0.4) 0%, rgba(0,0,0,0.95) 100%);
+    display: none; /* Controlado pelo JS */
     justify-content: center;
     align-items: center;
     flex-direction: column;
     z-index: 9999;
+    backdrop-filter: blur(5px);
 }
 
 #coffee-break-text {
@@ -475,20 +476,18 @@ canvas {
     font-size: 5rem;
     color: #ffd700;
     text-transform: uppercase;
-    text-shadow: 
-        0 0 10px #ffaa00,
-        0 0 20px #ffaa00,
-        0 0 40px #ff4400;
+    text-shadow: 0 0 10px #ffaa00, 0 0 20px #ffaa00;
     transform: scale(0);
     animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     text-align: center;
+    margin: 0;
 }
 
 #coffee-break-sub {
     font-family: 'Courier New', monospace;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: #fff;
-    margin-top: 10px;
+    margin-top: 20px;
     opacity: 0;
     animation: fadeIn 1s 0.5s forwards;
     text-align: center;
@@ -593,4 +592,173 @@ canvas {
 
 #coffee-break-text {
     display: block; 
+}
+
+/* --- NEVE (Christmas Theme) --- */
+#snow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+    overflow: hidden;
+}
+
+.snowflake {
+    position: absolute;
+    top: -10px;
+    color: #fff;
+    font-size: 1em;
+    opacity: 0.8;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    to { transform: translateY(105vh); }
+}
+
+/* --- INPUT DE NOME --- */
+#name-input-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10, 10, 20, 0.98);
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid var(--accent-color);
+    text-align: center;
+    color: white;
+    z-index: 2000;
+    pointer-events: auto !important; /* FORÇA O CLIQUE */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    display: none;
+}
+
+#player-name-input {
+    font-size: 20px;
+    padding: 10px;
+    margin: 20px 0;
+    border-radius: 8px;
+    border: none;
+    text-align: center;
+    width: 80%;
+    pointer-events: auto !important; /* FORÇA O FOCO NO TEXTO */
+}
+
+#btn-confirm-name {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Arvo', serif;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: transform 0.2s;
+    pointer-events: auto !important; /* Garante clique no botão */
+}
+
+#btn-confirm-name:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px var(--accent-color);
+}
+
+/* --- POINT AND CLICK (Hotspots) --- */
+#click-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 25; /* Fica acima do background, abaixo do diálogo */
+    pointer-events: none; /* Deixa passar clique onde não tem botão */
+}
+
+.hotspot-btn {
+    position: absolute;
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Arvo', serif;
+    text-transform: uppercase;
+    font-weight: bold;
+    backdrop-filter: blur(2px);
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.hotspot-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Ocultar caixa de diálogo quando não houver texto */
+.dialogue-hidden {
+    display: none !important;
+}
+
+/* --- ESTILO DAS PEGADAS (POINT AND CLICK) --- */
+.hotspot-footprint {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 20%, rgba(200,200,255,0.6) 100%);
+    border: 3px solid #fff;
+    font-size: 30px; /* Tamanho do Emoji */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--accent-color);
+    animation: pulseFoot 2s infinite;
+    z-index: 50;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+}
+
+.hotspot-footprint:hover {
+    transform: scale(1.2);
+    background: #fff;
+    box-shadow: 0 0 30px #ffff00;
+}
+
+/* Tooltip (Texto que aparece ao passar o mouse) */
+.hotspot-footprint::after {
+    content: attr(data-label); /* Pega o texto do atributo HTML */
+    position: absolute;
+    bottom: 70px; /* Fica acima da bolinha */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: 'Arvo', serif;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    border: 1px solid var(--accent-color);
+}
+
+.hotspot-footprint:hover::after {
+    opacity: 1;
+}
+
+@keyframes pulseFoot {
+    0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+    50% { transform: scale(1.1); box-shadow: 0 0 20px var(--accent-color); }
+    100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
 }
