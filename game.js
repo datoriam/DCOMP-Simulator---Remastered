@@ -1,7 +1,8 @@
 /* --- game.js - VERSÃO FINAL CORRIGIDA & MELHORADA --- */
 
 // --- 0. EFEITOS VISUAIS E UTILITÁRIOS ---
-function createSnow() {
+(function(){
+    function createSnow() {
     const c = document.getElementById('snow-container');
     if(!c) return;
     const count = 30; // Reduzido levemente para performance
@@ -18,34 +19,46 @@ function createSnow() {
 
 const AudioSys = {
     currentTrackId: null,
-    init: () => { new Audio().play().catch(()=>{}); }, 
+    init: () => { 
+        // Tenta destravar o áudio do navegador com um som mudo
+        const a = new Audio(); a.play().catch(()=>{}); 
+    }, 
     playMusic: (id) => {
+        // Se já está tocando a mesma música, apenas garante o volume
         if (AudioSys.currentTrackId === id) {
             const el = document.getElementById(id);
-            if (el && el.paused) el.play().catch(()=>{});
+            if (el) { el.volume = 0.4; if(el.paused) el.play().catch(()=>{}); }
             return;
         }
+
+        // Para todas as outras músicas
         ['bgm-main', 'bgm-minigame', 'bgm-maze'].forEach(m => {
             const e = document.getElementById(m);
             if(e) { 
-                // Fade out simples antes de parar
-                let vol = e.volume;
-                const fade = setInterval(() => {
-                    if(vol > 0.05) { vol -= 0.05; e.volume = vol; }
-                    else { clearInterval(fade); e.pause(); e.currentTime = 0; }
-                }, 50);
+                e.pause(); 
+                e.currentTime = 0; // Reinicia a música
             }
         });
+
+        // Toca a nova
         const t = document.getElementById(id);
         if(t) {
-            t.volume = 0.4;
-            t.play().catch(() => console.warn("Autoplay bloqueado pelo navegador"));
+            t.volume = 0.4; // Força volume audível
+            t.currentTime = 0; // Começa do início
+            const promise = t.play();
+            if (promise !== undefined) {
+                promise.catch(error => console.warn("Autoplay bloqueado:", error));
+            }
             AudioSys.currentTrackId = id;
         }
     },
     playSFX: (id) => {
         const el = document.getElementById(id);
-        if(el) { el.currentTime = 0; el.volume = 0.6; el.play().catch(()=>{}); }
+        if(el) { 
+            el.currentTime = 0; 
+            el.volume = 0.6; 
+            el.play().catch(()=>{}); 
+        }
     }
 };
 
@@ -197,7 +210,7 @@ const CoffeeBreakSystem = {
     tryRevive: (cb) => {
         const i = (Game.inventory||[]).indexOf('cafe');
         if(i > -1) {
-            Game.inventory.splice(i, 1); // Consome 1 café
+            Game.inventory.splice(i, 1);
             if(window.atualizarHudInventario) window.atualizarHudInventario();
             CoffeeBreakSystem.triggerEffect(cb);
             return true;
@@ -205,52 +218,70 @@ const CoffeeBreakSystem = {
         return false;
     },
     triggerEffect: (cb) => {
+        if (CoffeeBreakSystem.isActive) return; // Evita ativação dupla
         CoffeeBreakSystem.isActive = true;
-        const ov = document.getElementById('coffee-break-overlay'), tx = document.getElementById('coffee-break-text');
+
+        const ov = document.getElementById('coffee-break-overlay');
+        const tx = document.getElementById('coffee-break-text');
+        
         if(ov) ov.style.display = 'flex';
         if(tx) {
-            tx.style.animation = 'none'; tx.offsetHeight; tx.style.animation = 'popIn 0.5s forwards';
+            tx.style.animation = 'none'; 
+            tx.offsetHeight; /* Trigger reflow */
+            tx.style.animation = 'popIn 0.5s forwards';
         }
         
-        // Empurra inimigos para longe
+        // EMPURRÃO MAIS INTELIGENTE (Não joga inimigo pra fora do mapa)
         if(Game.minigame.entities) {
             Game.minigame.entities.forEach(e => {
                 if(e.type === 'enemy') {
-                    const dx = e.x - Game.minigame.player.x, dy = e.y - Game.minigame.player.y;
-                    e.x += (dx >= 0 ? 150 : -150); e.y += (dy >= 0 ? 150 : -150);
-                    e.x = Math.max(50, Math.min(800, e.x)); e.y = Math.max(50, Math.min(500, e.y));
+                    const dx = e.x - Game.minigame.player.x;
+                    const dy = e.y - Game.minigame.player.y;
+                    
+                    // Empurra 200px para longe
+                    e.x += (dx >= 0 ? 200 : -200); 
+                    e.y += (dy >= 0 ? 200 : -200);
+                    
+                    // Garante que o inimigo não fique preso na parede (limites do canvas 878x560)
+                    e.x = Math.max(50, Math.min(800, e.x)); 
+                    e.y = Math.max(50, Math.min(500, e.y));
                 }
             });
         }
         
-        // Listener para continuar (Clique ou Enter)
-        const resume = (e) => {
-            if(e.type === 'keydown' && e.key !== 'Enter') return;
+        // Função de retorno limpa
+        const resumeGame = (e) => {
+            // Aceita apenas Enter, Espaço ou Clique/Touch
+            if(e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
             
-            document.removeEventListener('keydown', resume);
-            document.removeEventListener('click', resume);
-            document.removeEventListener('touchstart', resume);
+            // Remove listeners IMEDIATAMENTE para não disparar 2x
+            document.removeEventListener('keydown', resumeGame);
+            document.removeEventListener('click', resumeGame);
+            document.removeEventListener('touchstart', resumeGame);
             
             if(ov) ov.style.display = 'none';
             CoffeeBreakSystem.isActive = false;
             
             if(Game.minigame.player) {
                 Game.minigame.player.invincible = true;
-                Game.minigame.player.color = "gold"; // Feedback visual
+                Game.minigame.player.color = "gold"; 
+                
+                // Garante que a invencibilidade dure 3 segundos (tempo extra para fugir)
                 setTimeout(() => { 
                     if(Game.minigame.player) {
                         Game.minigame.player.invincible = false;
                         Game.minigame.player.color = Game.minigame.mode === "ARENA" ? "cyan" : "#880afe";
                     }
-                }, 2000);
+                }, 3000);
             }
             if(cb) cb();
         };
 
+        // Pequeno delay para evitar que o clique do jogo ative o resume instantaneamente
         setTimeout(() => {
-            document.addEventListener('keydown', resume);
-            document.addEventListener('click', resume);
-            document.addEventListener('touchstart', resume, {passive: false});
+            document.addEventListener('keydown', resumeGame);
+            document.addEventListener('click', resumeGame);
+            document.addEventListener('touchstart', resumeGame, {passive: false});
         }, 500);
     }
 };
@@ -264,8 +295,16 @@ const Engine = {
         document.getElementById("background-layer").style.background = `url('${sd.bg}') center/cover`;
         
         const cImg = document.getElementById("char-sprite");
+        if (sc.char === 'nobody' || !Assets.chars[sc.char]) {
+        cImg.style.display = "none";
+        cImg.src = ""; // Limpa o src para não ficar resquício
+        } else {
+        cImg.src = Assets.chars[sc.char];
+        cImg.style.display = "block";
+        }
         cImg.src = Assets.chars[sd.char] || "";
         cImg.style.display = Assets.chars[sd.char] ? "block" : "none";
+        
         
         document.getElementById("speaker-name").innerText = "KAL-EL FREIRA";
         document.getElementById("dialogue-text").innerText = sd.text;
@@ -332,13 +371,20 @@ const Engine = {
                 else if(c.action === "START_KAL_QUIZ") KalElSystem.start();
                 else if(c.action === "START_MAZE") Minigame.startMaze();
                 else if(c.action === "GET_REWARD_CAFE") { 
+                if (Game.inventory.length >= 64) {
+                    alert("Inventário Cheio! (Máx 64)");
+                } else {
                     Game.wins++; 
                     Game.inventory.push('cafe'); 
-                    if(window.atualizarHudInventario) window.atualizarHudInventario();
+                    if(typeof atualizarHudInventario !== 'undefined') atualizarHudInventario();
                     AudioSys.playSFX('sfx-collect');
                     Engine.loadScene('end_cafe'); 
                 }
+            }
                 else if(c.action === "GET_REWARD_SCROLL") { 
+                    if (Game.inventory.length >= 64) {
+                    alert("Inventário Cheio! (Máx 64)");
+                } 
                     Game.wins++; 
                     Game.inventory.push('pergaminho');
                     if(window.atualizarHudInventario) window.atualizarHudInventario();
@@ -409,19 +455,41 @@ const Minigame = {
 
 // --- 6. INPUT E FÍSICA ---
 const Input = {
-    keys: {}, touch: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, velocityX: 0, velocityY: 0 },
-    reset: () => { Input.keys = {}; Input.touch = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, velocityX: 0, velocityY: 0 }; },
+    keys: {}, 
+    touch: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, velocityX: 0, velocityY: 0 },
+    reset: () => { 
+        Input.keys = {}; 
+        Input.touch = { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, velocityX: 0, velocityY: 0 }; 
+    },
     init: () => {
-        window.addEventListener("keydown", e => { if(e.target.tagName !== "INPUT") { if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d"].includes(e.key)) e.preventDefault(); Input.keys[e.key] = true; Input.keys[e.key.toLowerCase()] = true; } });
-        window.addEventListener("keyup", e => { if(e.target.tagName !== "INPUT") { Input.keys[e.key] = false; Input.keys[e.key.toLowerCase()] = false; } });
+        // Teclado
+        window.addEventListener("keydown", e => { 
+            if(e.target.tagName !== "INPUT") { 
+                if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d"].includes(e.key)) e.preventDefault(); 
+                Input.keys[e.key] = true; 
+                Input.keys[e.key.toLowerCase()] = true; 
+            } 
+        });
+        window.addEventListener("keyup", e => { 
+            if(e.target.tagName !== "INPUT") { 
+                Input.keys[e.key] = false; 
+                Input.keys[e.key.toLowerCase()] = false; 
+            } 
+        });
         
         const cv = document.getElementById("game-canvas");
         if(cv) {
             const start = (x, y) => {
-                Input.touch.active = true; const r = cv.getBoundingClientRect();
-                Input.touch.startX = x - r.left; Input.touch.startY = y - r.top;
-                Input.touch.currentX = Input.touch.startX; Input.touch.currentY = Input.touch.startY;
-                Input.touch.velocityX = 0; Input.touch.velocityY = 0;
+                Input.touch.active = true; 
+                const r = cv.getBoundingClientRect();
+                Input.touch.startX = x - r.left; 
+                Input.touch.startY = y - r.top;
+                Input.touch.currentX = Input.touch.startX; 
+                Input.touch.currentY = Input.touch.startY;
+                Input.touch.velocityX = 0; 
+                Input.touch.velocityY = 0;
+
+                // Lógica de clicar na porta do Quiz (mantido, pois é clique, não arraste)
                 if (Game.minigame.mode === "QUIZ") {
                     Game.minigame.entities.forEach(e => {
                         if (e.type === 'door' && Input.touch.startX >= e.x && Input.touch.startX <= e.x+e.w && Input.touch.startY >= e.y && Input.touch.startY <= e.y+e.h) {
@@ -437,23 +505,33 @@ const Input = {
                     });
                 }
             };
+
             cv.addEventListener("touchstart", e => { e.preventDefault(); start(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
             cv.addEventListener("mousedown", e => start(e.clientX, e.clientY));
+
+            // --- AQUI ESTÁ A MUDANÇA ---
             const move = (x, y) => {
                 if (!Input.touch.active) return;
                 const r = cv.getBoundingClientRect();
-                Input.touch.currentX = x - r.left; Input.touch.currentY = y - r.top;
+                
+                // Apenas atualizamos onde o dedo está. 
+                // NÃO movemos o boneco aqui. Quem move agora é o Physics.update()
+                Input.touch.currentX = x - r.left; 
+                Input.touch.currentY = y - r.top;
+                
+                // Mantemos o cálculo de velocidade para a inércia (quando solta o dedo)
                 Input.touch.velocityX = (Input.touch.currentX - Input.touch.startX) * 0.2;
                 Input.touch.velocityY = (Input.touch.currentY - Input.touch.startY) * 0.2;
-                if (["ARENA","QUIZ"].includes(Game.minigame.mode)) {
-                    const p = Game.minigame.player, nX = Input.touch.currentX - p.w/2, nY = Input.touch.currentY - p.h/2;
-                    p.x = Math.max(0, Math.min(cv.width - p.w, nX)); p.y = Math.max(0, Math.min(cv.height - p.h, nY));
-                }
+                
+                // O CÓDIGO DE TELEPORTE FOI REMOVIDO DAQUI
             };
+
             cv.addEventListener("touchmove", e => { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
             cv.addEventListener("mousemove", e => move(e.clientX, e.clientY));
+            
             const end = () => Input.touch.active = false;
-            cv.addEventListener("touchend", e => { e.preventDefault(); end(); }); cv.addEventListener("mouseup", end);
+            cv.addEventListener("touchend", e => { e.preventDefault(); end(); }); 
+            cv.addEventListener("mouseup", end);
         }
     }
 };
@@ -464,22 +542,52 @@ const Physics = {
         const p = Game.minigame.player;
         if (!p) return;
 
-        const s = 5; let dx = 0, dy = 0;
+        const s = 5; // Velocidade do teclado
+        let dx = 0, dy = 0;
         
-        // Controles
+        // --- 1. CONTROLES (Teclado) ---
         if (Input.keys.ArrowUp || Input.keys.w) dy = -s; 
         if (Input.keys.ArrowDown || Input.keys.s) dy = s;
         if (Input.keys.ArrowLeft || Input.keys.a) dx = -s; 
         if (Input.keys.ArrowRight || Input.keys.d) dx = s;
         
-        // Touch Physics (Simples Inércia)
-        if (!Input.touch.active && (Math.abs(Input.touch.velocityX) > 0.1 || Math.abs(Input.touch.velocityY) > 0.1)) {
+        // --- 2. CONTROLES (Touch / Mouse) - A CORREÇÃO ESTÁ AQUI ---
+        if (Input.touch.active) {
+            // O alvo é onde o dedo está (centralizando o boneco no dedo)
+            const targetX = Input.touch.currentX - (p.w / 2);
+            const targetY = Input.touch.currentY - (p.h / 2);
+
+            // Calcula a distância até o dedo
+            const diffX = targetX - p.x;
+            const diffY = targetY - p.y;
+
+            // Fator de suavização (0.2 = move 20% da distância por frame)
+            // Isso dá uma sensação de peso e evita o teleporte
+            dx = diffX * 0.2;
+            dy = diffY * 0.2;
+
+            // LIMITADOR DE VELOCIDADE (O Segredo anti-roubo)
+            // Se o dedo estiver muito longe, ele limita a velocidade máxima
+            // para garantir que a colisão detecte a parede no caminho.
+            const maxSpeed = 15; 
+            dx = Math.max(-maxSpeed, Math.min(maxSpeed, dx));
+            dy = Math.max(-maxSpeed, Math.min(maxSpeed, dy));
+            
+            // Atualiza inércia para quando soltar o dedo
+            Input.touch.velocityX = dx;
+            Input.touch.velocityY = dy;
+        } 
+        // Inércia (quando solta o dedo)
+        else if (Math.abs(Input.touch.velocityX) > 0.1 || Math.abs(Input.touch.velocityY) > 0.1) {
             dx += Input.touch.velocityX; dy += Input.touch.velocityY;
             Input.touch.velocityX *= 0.9; Input.touch.velocityY *= 0.9;
         }
 
-        const nX = p.x + dx, nY = p.y + dy;
+        // --- 3. APLICA MOVIMENTO E COLISÃO ---
+        // Agora aplicamos o movimento calculado (seja por tecla ou touch)
+        
         // Limites da tela
+        const nX = p.x + dx, nY = p.y + dy;
         if (nX >= 0 && nX + p.w <= Game.canvas.width) p.x = nX;
         if (nY >= 0 && nY + p.h <= Game.canvas.height) p.y = nY;
 
@@ -488,16 +596,17 @@ const Physics = {
         Game.minigame.entities.forEach(e => {
             if (chk(p, e)) {
                 if (e.type === 'wall') {
-                    // Colisão simples: Reverte movimento
-                    // Melhoria: Reverter apenas no eixo da colisão para não prender
+                    // Colisão com Parede
+                    // Como agora temos 'dx' e 'dy' reais (não teleportados),
+                    // a lógica de reverter movimento funciona perfeitamente.
                     const prevX = p.x - dx;
-                    const prevY = p.y - dy;
+                    // const prevY = p.y - dy; // (Não precisamos calcular Y se revertermos X)
                     
-                    // Se estava livre no X, mas bateu agora, reverte X
+                    // Verifica se bateu na horizontal
                     if (prevX + p.w <= e.x || prevX >= e.x + e.w) {
-                         p.x -= dx;
+                         p.x -= dx; // Reverte X
                     } else {
-                         p.y -= dy;
+                         p.y -= dy; // Reverte Y
                     }
                 }
                 else if (e.type === 'enemy' && Game.minigame.mode === 'ARENA') {
@@ -521,12 +630,14 @@ const Physics = {
                     }
                 }
             }
+            // IA do Inimigo
             if (e.type === 'enemy' && Game.minigame.mode === 'ARENA') {
                 const edx = p.x - e.x, edy = p.y - e.y, dst = Math.sqrt(edx*edx + edy*edy);
                 if (dst > 10) { e.x += (edx/dst)*e.speed; e.y += (edy/dst)*e.speed; }
             }
         });
 
+        // Coleta de itens
         if (Game.minigame.mode === 'ARENA') {
             let cnt = 0;
             Game.minigame.collectibles.forEach(c => {
@@ -661,4 +772,4 @@ window.onload = () => {
         const s = document.getElementById('loading-screen'); s.style.transition = "opacity 1s"; s.style.opacity = 0;
         setTimeout(() => { s.style.display = 'none'; Engine.loadScene("inicio"); requestAnimationFrame(Engine.gameLoop); }, 1000);
     };
-};
+};})();
